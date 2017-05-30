@@ -23,7 +23,49 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+class Address < ActiveRecord::Base
+  # columns: :city, :district
+end
+
+class Person < ActiveRecord::Base
+  # columns: :name, email, :phone, :address_id
+
+  belongs_to :address
+  has_one    :user
+  has_many   :books
+
+  delegate_attributes to: :address, prefix: true
+end
+
+person = Person.new(name: "Joe", email: 'joe@mail.com', address_city: 'São Paulo', address_district: 'South Zone')
+
+person.name             # 'Joe'
+person.address_city     # 'São Paulo'
+person.address.city     # 'São Paulo'
+person.address_district # 'South Zone'
+person.address.district # 'South Zone'
+
+class User < ActiveRecord::Base
+  belongs_to :person, autosave: true
+  # columns: :login, :password
+
+  delegate_associations to: :person
+  delegate_attributes to: :person
+end
+
+user = User.new(login: 'admin', password: 'paswd', name: "Joe", email: 'joe@mail.com')
+
+user.name           # 'Joe'
+user.login          # 'admin'
+user.user           # @user
+user.books          # []
+
+user.email          # 'joe@mail.com'
+user.email?         # true
+user.email_changed? # true
+user.email_was      # nil
+```
 
 ## Development
 
