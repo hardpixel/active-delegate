@@ -33,12 +33,12 @@ module ActiveDelegate
 
       # Get model association class
       def association_class
-        association_reflection.try :klass
+        association_reflection.klass
       end
 
       # Get association attribute names
       def association_attribute_names
-        association_class.try(:attribute_names) || []
+        association_class.attribute_names
       end
 
       # Default excluded attributes
