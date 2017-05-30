@@ -93,7 +93,10 @@ module ActiveDelegate
       # Get prefixed attributes
       def prefix_attributes(attributes)
         if @options[:prefix].present?
-          attributes.map { |a| :"#{@options[:prefix]}_#{a}" }
+          prefix = @options[:prefix]
+          prefix = @options[:to] if prefix.is_a? TrueClass
+
+          attributes.map { |a| :"#{prefix}_#{a}" }
         else
           attributes
         end
