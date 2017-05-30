@@ -8,15 +8,15 @@ module ActiveDelegate
     def included(model_class)
       model_class.extend self
     end
+  end
 
-    def delegate_associations(*args)
-      options = args.extract_options!
-      Associations.new(args, options)
-    end
+  def delegate_associations(*args)
+    options = args.extract_options!
+    Associations.new(self, args, options)
+  end
 
-    def delegate_attributes(*args)
-      options = args.extract_options!
-      Attributes.new(args, options)
-    end
+  def delegate_attributes(*args)
+    options = args.extract_options!
+    Attributes.new(self, args, options)
   end
 end
