@@ -49,21 +49,29 @@ module ActiveDelegate
         [:id, :created_at, :updated_at] + poly_attr.to_a
       end
 
-      # Get delegateable attributes
-      def delegateable_attributes
+      # Get delegatable attributes
+      def delegatable_attributes
         attributes = association_attribute_names.map(&:to_sym)
         attributes = attributes & @options[:only].to_a   if @options[:only].present?
         attributes = attributes - @options[:except].to_a if @options[:except].present?
         attributes = attributes - default_excluded_attributes
-        attributes = attributes + Translations.localized_methods(attributes) if @options[:translatable].present?
 
         attributes.map(&:to_sym)
       end
 
-      # Get delegateable methods
-      def delegateable_methods
-        readwrite  = ReadWrite.readwrite_methods(delegateable_attributes)
-        dirty      = Dirty.dirty_methods(delegateable_attributes)
+      # Get localized delegatable attributes
+      def translateable_attributes
+        attributes = delegatable_attributes
+        localized  = Translations.localized_methods(attributes) if @options[:translatable].present?
+
+        localized.to_a.map(&:to_sym)
+      end
+
+      # Get delegatable methods
+      def delegatable_methods
+        attributes = delegatable_attributes + translateable_attributes
+        readwrite  = ReadWrite.readwrite_methods(attributes)
+        dirty      = Dirty.dirty_methods(attributes)
         methods    = readwrite + dirty
 
         methods.map(&:to_sym)
@@ -72,7 +80,7 @@ module ActiveDelegate
       # Delegate attributes
       def delegate_attributes
         options = { to: @options[:to], allow_nil: @options[:allow_nil], prefix: @options[:prefix] }
-        @model.delegate(*delegateable_methods, options)
+        @model.delegate(*delegatable_methods, options)
       end
 
       # Build association method override
@@ -82,13 +90,26 @@ module ActiveDelegate
         end
       end
 
+      # Get prefixed attributes
+      def prefix_attributes(attributes)
+        if @options[:prefix].present?
+          attributes.map { |a| :"#{@options[:prefix]}_#{a}" }
+        else
+          attributes
+        end
+      end
+
       # Save delagated attributes in model class
       def save_delegated_attributes
-        attributes = delegateable_attributes
-        attributes = attributes.map { |a| :"#{@options[:prefix]}_#{a}" } if @options[:prefix].present?
+        delegatable  = prefix_attributes(delegatable_attributes)
+        translatable = prefix_attributes(translateable_attributes)
 
         @model.send :define_singleton_method, :"#{@options[:to]}_attribute_names" do
-          attributes
+          delegatable
+        end
+
+        @model.send :define_singleton_method, :"#{@options[:to]}_translatable_attribute_names" do
+          translatable
         end
       end
   end
