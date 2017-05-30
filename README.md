@@ -48,7 +48,7 @@ person.address.district # 'South Zone'
 
 class User < ActiveRecord::Base
   belongs_to :person, autosave: true
-  # columns: :login, :password
+  # columns: :login, :password, :person_id
 
   delegate_associations to: :person
   delegate_attributes to: :person
