@@ -12,11 +12,11 @@ module ActiveDelegate
 
   def delegate_associations(*args)
     options = args.extract_options!
-    Associations.new(self, args, options)
+    Associations.new(self, options)
   end
 
   def delegate_attributes(*args)
     options = args.extract_options!
-    Attributes.new(self, args, options)
+    Attributes.new(self, options)
   end
 end

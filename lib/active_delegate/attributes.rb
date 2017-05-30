@@ -5,14 +5,13 @@ module ActiveDelegate
 
   class Attributes
     # Initialize attributes
-    def initialize(model, attributes, options)
-      @model      = model
-      @attributes = attributes
-      @options    = default_options.merge(options)
+    def initialize(model, options)
+      @model   = model
+      @options = default_options.merge(options)
 
+      build_association
       delegate_attributes
       save_delegated_attributes
-      build_association
     end
 
     private
