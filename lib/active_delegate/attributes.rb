@@ -1,7 +1,7 @@
 module ActiveDelegate
-  autoload :ReadWrite,    'active_delegate/read_write'
-  autoload :Dirty,        'active_delegate/dirty'
-  autoload :Translations, 'active_delegate/translations'
+  autoload :ReadWrite, 'active_delegate/read_write'
+  autoload :Dirty,     'active_delegate/dirty'
+  autoload :Localized, 'active_delegate/localized'
 
   class Attributes
     # Initialize attributes
@@ -19,7 +19,7 @@ module ActiveDelegate
 
       # Get default options
       def default_options
-        { except: [], only: [], allow_nil: false, to: [], prefix: nil, translatable: false }
+        { except: [], only: [], allow_nil: false, to: [], prefix: nil, localized: false }
       end
 
       # Get association reflection
@@ -60,16 +60,16 @@ module ActiveDelegate
       end
 
       # Get localized delegatable attributes
-      def translateable_attributes
+      def localized_attributes
         attributes = delegatable_attributes
-        localized  = Translations.localized_methods(attributes) if @options[:translatable].present?
+        localized  = Localized.localized_methods(attributes) if @options[:localized].present?
 
         localized.to_a.map(&:to_sym)
       end
 
       # Get delegatable methods
       def delegatable_methods
-        attributes = delegatable_attributes + translateable_attributes
+        attributes = delegatable_attributes + localized_attributes
         readwrite  = ReadWrite.readwrite_methods(attributes)
         dirty      = Dirty.dirty_methods(attributes)
         methods    = readwrite + dirty
@@ -101,15 +101,16 @@ module ActiveDelegate
 
       # Save delagated attributes in model class
       def save_delegated_attributes
-        delegatable  = prefix_attributes(delegatable_attributes)
-        translatable = prefix_attributes(translateable_attributes)
-
+        delegated = prefix_attributes(delegatable_attributes)
         @model.send :define_singleton_method, :"#{@options[:to]}_attribute_names" do
-          delegatable
+          delegated
         end
 
-        @model.send :define_singleton_method, :"#{@options[:to]}_translatable_attribute_names" do
-          translatable
+        if @options[:localized].present?
+          localized = prefix_attributes(localized_attributes)
+          @model.send :define_singleton_method, :"#{@options[:to]}_localized_attribute_names" do
+            localized
+          end
         end
       end
   end

@@ -1,7 +1,7 @@
 require 'i18n'
 
 module ActiveDelegate
-  module Translations
+  module Localized
     class << self
       # Get localized methods for attributes
       def localized_methods(attributes)
