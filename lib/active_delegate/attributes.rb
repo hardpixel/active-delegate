@@ -104,15 +104,15 @@ module ActiveDelegate
       # Save delagated attributes in model class
       def save_delegated_attributes
         delegated = prefix_attributes(delegatable_attributes)
-        @model.send :define_singleton_method, :"#{@options[:to]}_attribute_names" do
-          delegated
-        end
+        dl_method = :"#{@options[:to]}_attribute_names"
+
+        @model.send(:define_singleton_method, dl_method) { delegated }
 
         if @options[:localized].present?
           localized = prefix_attributes(localized_attributes)
-          @model.send :define_singleton_method, :"#{@options[:to]}_localized_attribute_names" do
-            localized
-          end
+          lc_method = :"#{@options[:to]}_localized_attribute_names"
+
+          @model.send(:define_singleton_method, lc_method) { localized }
         end
       end
   end
