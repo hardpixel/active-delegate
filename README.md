@@ -3,6 +3,7 @@
 Stores and retrieves delegatable data through attributes on a ActiveRecord class, with support for translatable attributes.
 
 [![Gem Version](https://badge.fury.io/rb/active_delegate.svg)](https://badge.fury.io/rb/active_delegate)
+[![Build Status](https://travis-ci.org/hardpixel/active-delegate.svg?branch=master)](https://travis-ci.org/hardpixel/active-delegate)
 [![Code Climate](https://codeclimate.com/github/hardpixel/active-delegate/badges/gpa.png)](https://codeclimate.com/github/hardpixel/active-delegate)
 
 ## Installation
