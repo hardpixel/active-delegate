@@ -84,12 +84,12 @@ module ActiveDelegate
 
       # Redefine build association method
       def redefine_build_association
-        association_name = @options[:to]
+        assoc_name = @options[:to]
 
         @model.class_eval do
           class_eval <<-EOM, __FILE__, __LINE__ + 1
-            def #{association_name}
-              super || send(:build_#{association_name})
+            def #{assoc_name}
+              super || send(:build_#{assoc_name})
             end
           EOM
         end
