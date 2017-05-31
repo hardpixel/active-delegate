@@ -9,9 +9,9 @@ module ActiveDelegate
       @model   = model
       @options = default_options.merge(options)
 
-      build_association
       delegate_attributes
       save_delegated_attributes
+      redefine_build_association
     end
 
     private
@@ -82,10 +82,16 @@ module ActiveDelegate
         @model.delegate(*delegatable_methods, options)
       end
 
-      # Build association method override
-      def build_association
-        @model.class.send :define_method, :"#{@options[:to]}" do
-          super || @model.send(:"build_#{@options[:to]}")
+      # Redefine build association method
+      def redefine_build_association
+        association_name = @options[:to]
+
+        @model.class_eval do
+          class_eval <<-EOM, __FILE__, __LINE__ + 1
+            def #{association_name}
+              super || send(:build_#{association_name})
+            end
+          EOM
         end
       end
 
