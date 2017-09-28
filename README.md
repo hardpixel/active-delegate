@@ -38,16 +38,29 @@ class Person < ActiveRecord::Base
   has_one    :user
   has_many   :books
 
-  delegate_attributes to: :address, prefix: true
+  delegate_attributes to: :address, prefix: true, localized: true
 end
 
-person = Person.new(name: "John", email: 'john@mail.com', address_city: 'Athens', address_district: 'Attiki')
+params = {
+  name:                'John',
+  email:               'john@mail.com',
+  address_city:        'Athens',
+  address_city_el:     'Αθήνα',
+  address_district:    'Attiki',
+  address_district_el: 'Αττική'
+}
 
-person.name             # 'John'
-person.address_city     # 'Athens'
-person.address.city     # 'Athens'
-person.address_district # 'Attiki'
-person.address.district # 'Attiki'
+person = Person.new(params)
+
+person.name                # 'John'
+person.address_city        # 'Athens'
+person.address.city        # 'Athens'
+person.address_city_el     # 'Αθήνα'
+person.address.city_el     # 'Αθήνα'
+person.address_district    # 'Attiki'
+person.address.district    # 'Attiki'
+person.address_district_el # 'Αττική'
+person.address.district_el # 'Αττική'
 
 class User < ActiveRecord::Base
   # columns: :login, :password, :person_id
@@ -60,7 +73,14 @@ class User < ActiveRecord::Base
   delegate_attributes   to: :person
 end
 
-user = User.new(login: 'jonian', password: 'passwd', name: "John", email: 'john@mail.com')
+params = {
+  login:    'jonian',
+  password: 'passwd',
+  name:     'John',
+  email:    'john@mail.com'
+}
+
+user = User.new(params)
 
 user.name           # 'John'
 user.login          # 'jonian'
