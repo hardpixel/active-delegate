@@ -48,11 +48,18 @@ module ActiveDelegate
         [:id, :created_at, :updated_at] + poly_attr.to_a
       end
 
+      # Get method attributes
+      def association_valid_methods(attributes)
+        assoc_methods = association_class.public_instance_methods
+        attributes.to_a.select { |a| a.in? assoc_methods }
+      end
+
       # Get delegatable attributes
       def delegatable_attributes
         attributes = association_attribute_names.map(&:to_sym)
         attributes = attributes & @options[:only].to_a   if @options[:only].present?
         attributes = attributes - @options[:except].to_a if @options[:except].present?
+        attributes = attributes + association_valid_methods(@options[:only])
         attributes = attributes - default_excluded_attributes
 
         attributes.map(&:to_sym)
@@ -109,8 +116,9 @@ module ActiveDelegate
 
       # Save delagated attributes in model class
       def save_delegated_attributes
-        delegated = prefix_attributes(delegatable_attributes)
         dl_method = :"#{@options[:to]}_attribute_names"
+        delegated = prefix_attributes(delegatable_attributes)
+        delegated = @model.try(dl_method).to_a.concat(delegated)
 
         @model.send(:define_singleton_method, dl_method) { delegated }
 
