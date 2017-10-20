@@ -2,7 +2,7 @@ require 'active_record'
 require 'active_delegate/version'
 
 module ActiveDelegate
-  extend Activesupport::Concern
+  extend ActiveSupport::Concern
 
   # Autoload modules
   autoload :Associations, 'active_delegate/associations'
