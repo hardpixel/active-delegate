@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.authors       = ['Jonian Guveli']
   spec.email         = ['jonian@hardpixel.eu']
   spec.summary       = %q{Delegate ActiveRecord model attributes and associations}
-  spec.description   = %q{Stores and retrieves delegatable data through attributes on a ActiveRecord class, with support for translatable attributes.}
+  spec.description   = %q{Stores and retrieves delegatable data through attributes on an ActiveRecord class, with support for translatable attributes.}
   spec.homepage      = 'https://github.com/hardpixel/active-delegate'
   spec.license       = 'MIT'
   spec.files         = Dir['{lib/**/*,[A-Z]*}']
