@@ -121,12 +121,23 @@ module ActiveDelegate
         delegated = @model.try(dl_method).to_a.concat(delegated)
 
         @model.send(:define_singleton_method, dl_method) { delegated }
+        define_attribute_names_and_types(delegated)
 
         if @options[:localized].present?
           localized = prefix_attributes(localized_attributes)
           lc_method = :"#{@options[:to]}_localized_attribute_names"
 
           @model.send(:define_singleton_method, lc_method) { localized }
+        end
+      end
+
+      # Define attribute names and types
+      def define_attribute_names_and_types(attributes)
+        attributes.each do |attrib|
+          attr_name = attrib.to_s.sub("#{@options[:to]}_", '')
+          cast_type = association_class.attribute_types["#{attr_name}"]
+
+          @model.attribute(attrib, cast_type) unless cast_type.nil?
         end
       end
   end
