@@ -1,10 +1,9 @@
+require 'active_record'
 require 'active_delegate/version'
 
 module ActiveDelegate
   autoload :Associations, 'active_delegate/associations'
   autoload :Attributes,   'active_delegate/attributes'
-
-  require "active_record"
 
   class << self
     def included(model_class)
