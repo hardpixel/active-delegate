@@ -2,22 +2,23 @@ require 'active_record'
 require 'active_delegate/version'
 
 module ActiveDelegate
+  extend Activesupport::Concern
+
+  # Autoload modules
   autoload :Associations, 'active_delegate/associations'
   autoload :Attributes,   'active_delegate/attributes'
 
-  class << self
-    def included(model_class)
-      model_class.extend self
+  class_methods do
+    # Delegate associations
+    def delegate_associations(*args)
+      options = args.extract_options!
+      Associations.new(self, options)
     end
-  end
 
-  def delegate_associations(*args)
-    options = args.extract_options!
-    Associations.new(self, options)
-  end
-
-  def delegate_attributes(*args)
-    options = args.extract_options!
-    Attributes.new(self, options)
+    # Delegate attributes
+    def delegate_attributes(*args)
+      options = args.extract_options!
+      Attributes.new(self, options)
+    end
   end
 end
