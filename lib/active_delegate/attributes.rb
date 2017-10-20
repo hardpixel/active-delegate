@@ -102,13 +102,16 @@ module ActiveDelegate
         end
       end
 
+      # Get attribute prefix
+      def attribute_prefix
+        prefix = @options[:prefix]
+        prefix.is_a?(TrueClass) ? @options[:to] : prefix
+      end
+
       # Get prefixed attributes
       def prefix_attributes(attributes)
         if @options[:prefix].present?
-          prefix = @options[:prefix]
-          prefix = @options[:to] if prefix.is_a? TrueClass
-
-          attributes.map { |a| :"#{prefix}_#{a}" }
+          attributes.map { |a| :"#{attribute_prefix}_#{a}" }
         else
           attributes
         end
@@ -134,7 +137,7 @@ module ActiveDelegate
       # Define attribute names and types
       def define_attribute_names_and_types(attributes)
         attributes.each do |attrib|
-          attr_name = attrib.to_s.sub("#{@options[:to]}_", '')
+          attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
           cast_type = association_class.attribute_types["#{attr_name}"]
 
           @model.attribute(attrib, cast_type) unless cast_type.nil?
