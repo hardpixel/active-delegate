@@ -136,13 +136,12 @@ module ActiveDelegate
 
         undefined.each do |attrib|
           attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
-          attr_deft = @options[:default] || association_class.column_defaults["#{attr_name}"]
           cast_type = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
 
-          @model.attribute(attrib, cast_type, default: attr_deft)
+          @model.attribute(attrib, cast_type)
 
           if @options[:alias].present?
-            @model.attribute(@options[:alias], cast_type, default: attr_deft)
+            @model.attribute(@options[:alias], cast_type)
             @model.alias_attribute(@options[:alias], attrib)
           end
         end
