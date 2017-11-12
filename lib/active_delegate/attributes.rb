@@ -114,11 +114,12 @@ module ActiveDelegate
       def save_delegated_attributes
         dl_atable = association_reflection.klass.table_name
         dl_method = :"#{dl_atable}_attribute_names"
-        delegated = prefix_attributes(delegatable_attributes)
-        delegated = @model.try(dl_method).to_a.concat(delegated)
 
-        @model.send(:define_singleton_method, dl_method) { delegated }
+        delegated = prefix_attributes(delegatable_attributes)
         define_attribute_names_and_types(delegated)
+
+        delegated = @model.try(dl_method).to_a.concat(delegated)
+        @model.send(:define_singleton_method, dl_method) { delegated }
 
         if @options[:localized].present?
           localized = prefix_attributes(localized_attributes)
@@ -133,9 +134,17 @@ module ActiveDelegate
         attributes.each do |attrib|
           unless @model.attribute_names.include?("#{attrib}")
             attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
-            cast_type = association_class.attribute_types["#{attr_name}"]
+            attr_deft = @options[:default] || association_class.column_defaults["#{attr_name}"]
+            cast_type = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
 
-            @model.attribute(attrib, cast_type) unless cast_type.nil?
+            unless cast_type.nil?
+              @model.attribute(attrib, cast_type, default: attr_deft)
+
+              if @options[:alias].present?
+                @model.attribute(@options[:alias], cast_type, default: attr_deft)
+                @model.alias_attribute(@options[:alias], attrib)
+              end
+            end
           end
         end
       end
