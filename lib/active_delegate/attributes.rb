@@ -131,20 +131,19 @@ module ActiveDelegate
 
       # Define attribute names and types
       def define_attribute_names_and_types(attributes)
-        attributes.each do |attrib|
-          unless @model.attribute_names.include?("#{attrib}")
-            attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
-            attr_deft = @options[:default] || association_class.column_defaults["#{attr_name}"]
-            cast_type = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
+        existing  = association_attribute_names.map(&:to_sym)
+        undefined = attributes.reject { |a| a.in? existing }
 
-            unless cast_type.nil?
-              @model.attribute(attrib, cast_type, default: attr_deft)
+        undefined.each do |attrib|
+          attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
+          attr_deft = @options[:default] || association_class.column_defaults["#{attr_name}"]
+          cast_type = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
 
-              if @options[:alias].present?
-                @model.attribute(@options[:alias], cast_type, default: attr_deft)
-                @model.alias_attribute(@options[:alias], attrib)
-              end
-            end
+          @model.attribute(attrib, cast_type, default: attr_deft)
+
+          if @options[:alias].present?
+            @model.attribute(@options[:alias], cast_type, default: attr_deft)
+            @model.alias_attribute(@options[:alias], attrib)
           end
         end
       end
