@@ -138,10 +138,12 @@ module ActiveDelegate
       # Define attribute names and types
       def define_attribute_names_and_types(attributes)
         attributes.each do |attrib|
-          attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
-          cast_type = association_class.attribute_types["#{attr_name}"]
+          unless @model.attribute_names.include?("#{attrib}")
+            attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
+            cast_type = association_class.attribute_types["#{attr_name}"]
 
-          @model.attribute(attrib, cast_type) unless cast_type.nil?
+            @model.attribute(attrib, cast_type) unless cast_type.nil?
+          end
         end
       end
   end
