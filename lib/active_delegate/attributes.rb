@@ -131,7 +131,7 @@ module ActiveDelegate
 
       # Define attribute names and types
       def define_attribute_names_and_types(attributes)
-        existing  = association_attribute_names.map(&:to_sym)
+        existing  = @model.attribute_names.map(&:to_sym)
         undefined = attributes.reject { |a| a.in? existing }
 
         undefined.each do |attrib|
