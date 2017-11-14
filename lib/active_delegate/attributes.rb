@@ -135,8 +135,8 @@ module ActiveDelegate
         undefined = attributes.reject { |a| a.in? existing }
 
         undefined.each do |attrib|
-          attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
-          cast_type = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
+          attr_name    = attrib.to_s.sub("#{attribute_prefix}_", '')
+          cast_type    = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
           attr_alias   = @options[:alias]
           attr_default = @options[:default] || association_class.column_defaults["#{attr_name}"]
 
