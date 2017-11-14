@@ -137,14 +137,18 @@ module ActiveDelegate
         undefined.each do |attrib|
           attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
           cast_type = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
+          attr_alias   = @options[:alias]
 
           @model.attribute(attrib, cast_type)
 
-          if @options[:alias].present?
-            @model.attribute(@options[:alias], cast_type)
-            @model.alias_attribute(@options[:alias], attrib)
-          end
+          define_attribute_alias_method(attrib, attr_alias, cast_type) unless attr_alias.nil?
         end
+      end
+
+      # Define delegated attribute alias
+      def define_attribute_alias_method(attrib, attr_alias, cast_type)
+        @model.attribute(attr_alias, cast_type)
+        @model.alias_attribute(attr_alias, attrib)
       end
   end
 end
