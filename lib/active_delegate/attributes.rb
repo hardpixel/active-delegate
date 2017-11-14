@@ -138,10 +138,28 @@ module ActiveDelegate
           attr_name = attrib.to_s.sub("#{attribute_prefix}_", '')
           cast_type = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
           attr_alias   = @options[:alias]
+          attr_default = @options[:default] || association_class.column_defaults["#{attr_name}"]
 
           @model.attribute(attrib, cast_type)
 
+          define_attribute_default_value(attrib, attr_name, attr_default) unless attr_default.nil?
           define_attribute_alias_method(attrib, attr_alias, cast_type) unless attr_alias.nil?
+        end
+      end
+
+      # Define delegated attribute default
+      def define_attribute_default_value(attrib, attr_name, attr_default)
+        attr_assoc = @options[:to]
+        attr_cattr = :"_attribute_#{attrib}_default"
+
+        @model.send(:define_singleton_method, attr_cattr) { attr_default }
+
+        @model.class_eval do
+          class_eval <<-EOM, __FILE__, __LINE__ + 1
+            def #{attrib}
+              send(:#{attr_assoc}).try(:#{attr_name}) || self.class.send(:#{attr_cattr})
+            end
+          EOM
         end
       end
 
