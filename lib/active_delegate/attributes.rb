@@ -18,7 +18,7 @@ module ActiveDelegate
 
       # Get default options
       def default_options
-        { except: [], only: [], allow_nil: false, to: [], prefix: nil, localized: false }
+        { except: [], only: [], allow_nil: false, to: [], prefix: nil, localized: false, finder: false, scope: false }
       end
 
       # Get association reflection
