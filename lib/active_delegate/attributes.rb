@@ -140,12 +140,14 @@ module ActiveDelegate
           attr_alias   = @options[:alias]
           attr_default = @options[:default] || association_class.column_defaults["#{attr_name}"]
           attr_finder  = @options[:finder] || Array(@options[:finder]).include?(attr_name)
+          attr_scope   = @options[:scope] || Array(@options[:scope]).include?(attr_name)
 
           @model.attribute(attrib, cast_type)
 
           define_attribute_default_value(attrib, attr_name, attr_default) unless attr_default.nil?
           define_attribute_alias_method(attrib, attr_alias, cast_type) unless attr_alias.nil?
           define_attribute_finder_methods(attr_alias || attrib, attr_name) if attr_finder == true
+          define_attribute_scope_methods(attr_alias || attrib, attr_name) if attr_scope == true
         end
       end
 
@@ -183,6 +185,34 @@ module ActiveDelegate
 
         @model.send(:define_singleton_method, :"#{attr_method}!") do |value|
           includes(attr_assoc).find_by!(attr_table => { attr_name => value })
+        end
+      end
+
+      # Define attribute scope methods
+      def define_attribute_scope_methods(attrib, attr_name)
+        attr_assoc = @options[:to]
+        attr_table = association_reflection.klass.table_name
+        attr_blank = { attr_table => { attr_name => nil } }
+
+        @model.scope :"with_#{attrib}", -> (*names) do
+          named = { attr_table => { attr_name => names } }
+
+          if names.empty?
+            includes(attr_assoc).where.not(attr_blank)
+          else
+            includes(attr_assoc).where(named)
+          end
+        end
+
+        @model.scope :"without_#{attrib}", -> (*names) do
+          named = { attr_table => { attr_name => names } }
+
+          if names.empty?
+            includes(attr_assoc).where(attr_blank)
+          else
+            includes(attr_assoc).where(attr_blank)
+            .or(includes(attr_assoc).where.not(named))
+          end
         end
       end
   end
