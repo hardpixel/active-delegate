@@ -139,11 +139,13 @@ module ActiveDelegate
           cast_type    = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
           attr_alias   = @options[:alias]
           attr_default = @options[:default] || association_class.column_defaults["#{attr_name}"]
+          attr_finder  = @options[:finder] || Array(@options[:finder]).include?(attr_name)
 
           @model.attribute(attrib, cast_type)
 
           define_attribute_default_value(attrib, attr_name, attr_default) unless attr_default.nil?
           define_attribute_alias_method(attrib, attr_alias, cast_type) unless attr_alias.nil?
+          define_attribute_finder_methods(attr_alias || attrib, attr_name) if attr_finder == true
         end
       end
 
@@ -167,6 +169,21 @@ module ActiveDelegate
       def define_attribute_alias_method(attrib, attr_alias, cast_type)
         @model.attribute(attr_alias, cast_type)
         @model.alias_attribute(attr_alias, attrib)
+      end
+
+      # Define attribute finder methods
+      def define_attribute_finder_methods(attrib, attr_name)
+        attr_assoc  = @options[:to]
+        attr_table  = association_reflection.klass.table_name
+        attr_method = :"find_by_#{attrib}"
+
+        @model.send(:define_singleton_method, attr_method) do |value|
+          includes(attr_assoc).find_by(attr_table => { attr_name => value })
+        end
+
+        @model.send(:define_singleton_method, :"#{attr_method}!") do |value|
+          includes(attr_assoc).find_by!(attr_table => { attr_name => value })
+        end
       end
   end
 end
