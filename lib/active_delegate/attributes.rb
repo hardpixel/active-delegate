@@ -198,9 +198,9 @@ module ActiveDelegate
           named = { attr_table => { attr_name => names } }
 
           if names.empty?
-            includes(attr_assoc).where.not(attr_blank)
+            left_outer_joins(attr_assoc).where.not(attr_blank)
           else
-            includes(attr_assoc).where(named)
+            left_outer_joins(attr_assoc).where(named)
           end
         end
 
@@ -208,10 +208,10 @@ module ActiveDelegate
           named = { attr_table => { attr_name => names } }
 
           if names.empty?
-            includes(attr_assoc).where(attr_blank)
+            left_outer_joins(attr_assoc).where(attr_blank)
           else
-            includes(attr_assoc).where(attr_blank)
-            .or(includes(attr_assoc).where.not(named))
+            left_outer_joins(attr_assoc).where(attr_blank)
+            .or(left_outer_joins(attr_assoc).where.not(named))
           end
         end
       end
