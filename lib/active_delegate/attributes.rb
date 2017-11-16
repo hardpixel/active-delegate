@@ -197,21 +197,23 @@ module ActiveDelegate
         attr_blank = { attr_table => { attr_name => nil } }
 
         @model.scope :"with_#{attrib}", -> (*names) do
-          named = { attr_table => { attr_name => names } }
-
           if names.empty?
             left_outer_joins(attr_assoc).where.not(attr_blank)
           else
+            names = names.map { |n| type_caster.type_cast_for_database(attr_name, n) }
+            named = { attr_table => { attr_name => names } }
+
             left_outer_joins(attr_assoc).where(named)
           end
         end
 
         @model.scope :"without_#{attrib}", -> (*names) do
-          named = { attr_table => { attr_name => names } }
-
           if names.empty?
             left_outer_joins(attr_assoc).where(attr_blank)
           else
+            names = names.map { |n| type_caster.type_cast_for_database(attr_name, n) }
+            named = { attr_table => { attr_name => names } }
+
             left_outer_joins(attr_assoc).where(attr_blank)
             .or(left_outer_joins(attr_assoc).where.not(named))
           end
