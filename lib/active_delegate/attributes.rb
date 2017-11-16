@@ -180,11 +180,11 @@ module ActiveDelegate
         attr_method = :"find_by_#{attrib}"
 
         @model.send(:define_singleton_method, attr_method) do |value|
-          includes(attr_assoc).find_by(attr_table => { attr_name => value })
+          joins(attr_assoc).find_by(attr_table => { attr_name => value })
         end
 
         @model.send(:define_singleton_method, :"#{attr_method}!") do |value|
-          includes(attr_assoc).find_by!(attr_table => { attr_name => value })
+          joins(attr_assoc).find_by!(attr_table => { attr_name => value })
         end
       end
 
