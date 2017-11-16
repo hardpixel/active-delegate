@@ -180,10 +180,12 @@ module ActiveDelegate
         attr_method = :"find_by_#{attrib}"
 
         @model.send(:define_singleton_method, attr_method) do |value|
+          value = type_caster.type_cast_for_database(attr_name, value)
           joins(attr_assoc).find_by(attr_table => { attr_name => value })
         end
 
         @model.send(:define_singleton_method, :"#{attr_method}!") do |value|
+          value = type_caster.type_cast_for_database(attr_name, value)
           joins(attr_assoc).find_by!(attr_table => { attr_name => value })
         end
       end
