@@ -160,48 +160,59 @@ module ActiveDelegate
         undefined = attributes.reject { |a| a.in? existing }
 
         undefined.each do |attrib|
-          attr_name    = attrib.to_s.sub("#{attribute_prefix}_", '')
-          cast_type    = @options[:cast_type] || association_class.attribute_types["#{attr_name}"]
-          attr_alias   = @options[:alias]
-          attr_default = @options[:default] || association_class.column_defaults["#{attr_name}"]
-          attr_finder  = @options[:finder] || Array(@options[:finder]).include?(attr_name)
-          attr_scope   = @options[:scope] || Array(@options[:scope]).include?(attr_name)
+          attr_name = unprefix_attribute(attrib)
 
-          @model.attribute(attrib, cast_type)
-
-          define_attribute_default_value(attrib, attr_name, attr_default) unless attr_default.nil?
-          define_attribute_alias_method(attrib, attr_alias, cast_type) unless attr_alias.nil?
-          define_attribute_finder_methods(attr_alias || attrib, attr_name) if attr_finder == true
-          define_attribute_scope_methods(attr_alias || attrib, attr_name) if attr_scope == true
+          define_attribute_default_value(attrib, attr_name)
+          define_attribute_and_alias(attrib, attr_name)
+          define_attribute_finders_and_scopes(attrib, attr_name)
         end
       end
 
       # Define delegated attribute default
-      def define_attribute_default_value(attrib, attr_name, attr_default)
-        attr_assoc = @options[:to]
-        attr_cattr = :"_attribute_#{attrib}_default"
+      def define_attribute_default_value(attrib, attr_name)
+        attr_default = attribute_default(attr_name)
 
-        @model.send(:define_singleton_method, attr_cattr) { attr_default }
+        unless attr_default.nil?
+          attr_assoc = @options[:to]
+          attr_cattr = :"_attribute_#{attrib}_default"
 
-        @model.class_eval do
-          class_eval <<-EOM, __FILE__, __LINE__ + 1
-            def #{attrib}
-              send(:#{attr_assoc}).try(:#{attr_name}) || self.class.send(:#{attr_cattr})
-            end
-          EOM
+          @model.send(:define_singleton_method, attr_cattr) { attr_default }
+
+          @model.class_eval do
+            class_eval <<-EOM, __FILE__, __LINE__ + 1
+              def #{attrib}
+                send(:#{attr_assoc}).try(:#{attr_name}) || self.class.send(:#{attr_cattr})
+              end
+            EOM
+          end
         end
       end
 
       # Define delegated attribute alias
-      def define_attribute_alias_method(attrib, attr_alias, cast_type)
-        @model.attribute(attr_alias, cast_type)
-        @model.alias_attribute(attr_alias, attrib)
+      def define_attribute_and_alias(attrib, attr_name)
+        cast_type  = attribute_cast_type(attr_name)
+        attr_alias = @options[:alias]
+
+        @model.attribute(attrib, cast_type)
+
+        unless attr_alias.nil?
+          @model.attribute(attr_alias, cast_type)
+          @model.alias_attribute(attr_alias, attrib)
+        end
+      end
+
+      # Define attribute finders and scopes
+      def define_attribute_finders_and_scopes(attrib, attr_name)
+        attr_assoc = @options[:to]
+        attr_table = association_reflection.klass.table_name
+        attr_args  = [@options[:alias] || attrib, attr_name, attr_assoc, attr_table]
+
+        define_attribute_finder_methods(*attr_args) if define_finders?(attr_name)
+        define_attribute_scope_methods(*attr_args) if define_scopes?(attr_name)
       end
 
       # Define attribute finder methods
-      def define_attribute_finder_methods(attrib, attr_name)
-        attr_assoc  = @options[:to]
-        attr_table  = association_reflection.klass.table_name
+      def define_attribute_finder_methods(attrib, attr_name, attr_assoc, attr_table)
         attr_method = :"find_by_#{attrib}"
 
         @model.send(:define_singleton_method, attr_method) do |value|
@@ -216,10 +227,7 @@ module ActiveDelegate
       end
 
       # Define attribute scope methods
-      def define_attribute_scope_methods(attrib, attr_name)
-        attr_assoc = @options[:to]
-        attr_table = association_reflection.klass.table_name
-
+      def define_attribute_scope_methods(attrib, attr_name, attr_assoc, attr_table)
         @model.scope :"with_#{attrib}", -> (*names) do
           names = names.map { |n| type_caster.type_cast_for_database(attr_name, n) }
           joins(attr_assoc).where(attr_table => { attr_name => names })
