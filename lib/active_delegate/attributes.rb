@@ -141,7 +141,7 @@ module ActiveDelegate
         dl_method = :"#{dl_atable}_attribute_names"
 
         delegated = prefix_attributes(delegatable_attributes)
-        define_attribute_names_and_types(delegated)
+        define_attribute_defaults_and_methods(delegated)
 
         delegated = @model.try(dl_method).to_a.concat(delegated)
         @model.send(:define_singleton_method, dl_method) { delegated }
@@ -154,8 +154,8 @@ module ActiveDelegate
         end
       end
 
-      # Define attribute names and types
-      def define_attribute_names_and_types(attributes)
+      # Define attribute default values, methods and scopes
+      def define_attribute_defaults_and_methods(attributes)
         existing  = @model.attribute_names.map(&:to_sym)
         undefined = attributes.reject { |a| a.in? existing }
 
