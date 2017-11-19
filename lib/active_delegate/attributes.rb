@@ -101,6 +101,11 @@ module ActiveDelegate
         prefix.is_a?(TrueClass) ? @options[:to] : prefix
       end
 
+      # Get unprefixed attribute
+      def unprefix_attribute(attribute)
+        attribute.to_s.sub("#{attribute_prefix}_", '')
+      end
+
       # Get prefixed attributes
       def prefix_attributes(attributes)
         if @options[:prefix].present?
@@ -108,6 +113,26 @@ module ActiveDelegate
         else
           attributes
         end
+      end
+
+      # Get attribute default
+      def attribute_default(attribute)
+        @options[:default] || association_class.column_defaults["#{attribute}"]
+      end
+
+      # Get attribute cast type
+      def attribute_cast_type(attribute)
+        @options[:cast_type] || association_class.attribute_types["#{attribute}"]
+      end
+
+      # Check if should define attribute finders
+      def define_finders?(attribute)
+        @options[:finder] || Array(@options[:finder]).include?(attribute)
+      end
+
+      # Check if should define attribute scopes
+      def define_scopes?(attribute)
+        @options[:scope] || Array(@options[:scope]).include?(attribute)
       end
 
       # Save delagated attributes in model class
