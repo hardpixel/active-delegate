@@ -125,6 +125,11 @@ module ActiveDelegate
         @options.fetch :cast_type, association_class.attribute_types["#{attribute}"]
       end
 
+      # Check if attribute needs type cast
+      def needs_type_cast?(attribute)
+        attribute_cast_type(attribute) != association_class.attribute_types["#{attribute}"]
+      end
+
       # Check if should define attribute finders
       def define_finders?(attribute)
         @options[:finder] || Array(@options[:finder]).include?(attribute)
@@ -163,6 +168,7 @@ module ActiveDelegate
           attr_name = unprefix_attribute(attrib)
 
           define_attribute_default_value(attrib, attr_name)
+          define_attribute_type_cast(attrib, attr_name)
           define_attribute_and_alias(attrib, attr_name)
           define_attribute_finders_and_scopes(attrib, attr_name)
         end
@@ -182,6 +188,29 @@ module ActiveDelegate
             class_eval <<-EOM, __FILE__, __LINE__ + 1
               def #{attrib}
                 send(:#{attr_assoc}).try(:#{attr_name}) || self.class.send(:#{attr_cattr})
+              end
+            EOM
+          end
+        end
+      end
+
+      # Define attribute type casting
+      def define_attribute_type_cast(attrib, attr_name)
+        attr_assoc = @options[:to]
+        attr_cattr = :"_attribute_#{attrib}_default"
+
+        if needs_type_cast?(attr_name)
+          @model.class_eval do
+            class_eval <<-EOM, __FILE__, __LINE__ + 1
+              def #{attrib}
+                assoc_value = send(:#{attr_assoc}).try(:#{attr_name})
+                self.class.attribute_types['#{attrib}'].try(:cast, assoc_value) ||
+                self.class.try(:#{attr_cattr})
+              end
+
+              def #{attrib}=(value)
+                assoc_value = self.class.attribute_types['#{attrib}'].try(:cast, value)
+                send(:#{attr_assoc}).send(:#{attr_name}=, assoc_value)
               end
             EOM
           end
