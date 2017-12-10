@@ -122,12 +122,12 @@ module ActiveDelegate
 
       # Get attribute cast type
       def attribute_cast_type(attribute)
-        @options.fetch :cast_type, association_class.attribute_types["#{attribute}"]
+        @options.fetch :cast_type, association_class.type_for_attribute("#{attribute}")
       end
 
       # Check if attribute needs type cast
       def needs_type_cast?(attribute)
-        attribute_cast_type(attribute) != association_class.attribute_types["#{attribute}"]
+        attribute_cast_type(attribute) != association_class.type_for_attribute("#{attribute}")
       end
 
       # Check if should define attribute finders
@@ -204,12 +204,12 @@ module ActiveDelegate
             class_eval <<-EOM, __FILE__, __LINE__ + 1
               def #{attrib}
                 assoc_value = send(:#{attr_assoc}).try(:#{attr_name})
-                self.class.attribute_types['#{attrib}'].try(:cast, assoc_value) ||
+                self.class.type_for_attribute('#{attrib}').cast(assoc_value) ||
                 self.class.try(:#{attr_cattr})
               end
 
               def #{attrib}=(value)
-                assoc_value = self.class.attribute_types['#{attrib}'].try(:cast, value)
+                assoc_value = self.class.type_for_attribute('#{attrib}').cast(value)
                 send(:#{attr_assoc}).send(:#{attr_name}=, assoc_value)
               end
             EOM
@@ -245,12 +245,12 @@ module ActiveDelegate
         attr_method = :"find_by_#{attrib}"
 
         @model.send(:define_singleton_method, attr_method) do |value|
-          value = type_caster.type_cast_for_database(attr_name, value)
+          value = type_for_attribute("#{attrib}").cast(value)
           joins(attr_assoc).find_by(attr_table => { attr_name => value })
         end
 
         @model.send(:define_singleton_method, :"#{attr_method}!") do |value|
-          value = type_caster.type_cast_for_database(attr_name, value)
+          value = type_for_attribute("#{attrib}").cast(value)
           joins(attr_assoc).find_by!(attr_table => { attr_name => value })
         end
       end
@@ -258,12 +258,12 @@ module ActiveDelegate
       # Define attribute scope methods
       def define_attribute_scope_methods(attrib, attr_name, attr_assoc, attr_table)
         @model.scope :"with_#{attrib}", -> (*names) do
-          names = names.map { |n| type_caster.type_cast_for_database(attr_name, n) }
+          names = names.map { |n| type_for_attribute("#{attrib}").cast(n) }
           joins(attr_assoc).where(attr_table => { attr_name => names })
         end
 
         @model.scope :"without_#{attrib}", -> (*names) do
-          names = names.map { |n| type_caster.type_cast_for_database(attr_name, n) }
+          names = names.map { |n| type_for_attribute("#{attrib}").cast(n) }
           joins(attr_assoc).where.not(attr_table => { attr_name => names })
         end
       end
