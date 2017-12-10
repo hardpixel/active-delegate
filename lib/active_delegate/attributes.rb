@@ -242,15 +242,11 @@ module ActiveDelegate
 
       # Define attribute finder methods
       def define_attribute_finder_methods(attrib, attr_name, attr_assoc, attr_table)
-        attr_method = :"find_by_#{attrib}"
-
-        @model.send(:define_singleton_method, attr_method) do |value|
-          value = type_for_attribute("#{attrib}").cast(value)
+        @model.send(:define_singleton_method, :"find_by_#{attrib}") do |value|
           joins(attr_assoc).find_by(attr_table => { attr_name => value })
         end
 
-        @model.send(:define_singleton_method, :"#{attr_method}!") do |value|
-          value = type_for_attribute("#{attrib}").cast(value)
+        @model.send(:define_singleton_method, :"find_by_#{attrib}!") do |value|
           joins(attr_assoc).find_by!(attr_table => { attr_name => value })
         end
       end
@@ -258,12 +254,10 @@ module ActiveDelegate
       # Define attribute scope methods
       def define_attribute_scope_methods(attrib, attr_name, attr_assoc, attr_table)
         @model.scope :"with_#{attrib}", -> (*names) do
-          names = names.map { |n| type_for_attribute("#{attrib}").cast(n) }
           joins(attr_assoc).where(attr_table => { attr_name => names })
         end
 
         @model.scope :"without_#{attrib}", -> (*names) do
-          names = names.map { |n| type_for_attribute("#{attrib}").cast(n) }
           joins(attr_assoc).where.not(attr_table => { attr_name => names })
         end
       end
