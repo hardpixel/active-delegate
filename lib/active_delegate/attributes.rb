@@ -117,12 +117,12 @@ module ActiveDelegate
 
       # Get attribute default
       def attribute_default(attribute)
-        @options[:default] || association_class.column_defaults["#{attribute}"]
+        @options.fetch :default, association_class.column_defaults["#{attribute}"]
       end
 
       # Get attribute cast type
       def attribute_cast_type(attribute)
-        @options[:cast_type] || association_class.attribute_types["#{attribute}"]
+        @options.fetch :cast_type, association_class.attribute_types["#{attribute}"]
       end
 
       # Check if should define attribute finders
