@@ -125,9 +125,14 @@ module ActiveDelegate
         @options.fetch :cast_type, association_class.type_for_attribute("#{attribute}")
       end
 
+      # Check if attribute types are not the same
+      def cast_types_mismatch?(attribute)
+        attribute_cast_type(attribute) != association_class.type_for_attribute("#{attribute}")
+      end
+
       # Check if attribute needs type cast
       def needs_type_cast?(attribute)
-        attribute_cast_type(attribute) != association_class.type_for_attribute("#{attribute}")
+        @options[:cast] != false && cast_types_mismatch?(attribute)
       end
 
       # Check if should define attribute finders
