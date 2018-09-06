@@ -21,7 +21,7 @@ module ActiveDelegate
         {
           except: [], only: [], allow_nil: false, to: [],
           prefix: nil, localized: false, finder: false,
-          scope: false, cast: false
+          scope: false, cast: false, define: true
         }
       end
 
@@ -228,13 +228,14 @@ module ActiveDelegate
 
       # Define delegated attribute alias
       def define_attribute_and_alias(attrib, attr_name)
-        cast_type  = attribute_cast_type(attr_name)
-        attr_alias = @options[:alias]
+        cast_type   = attribute_cast_type(attr_name)
+        attr_alias  = @options[:alias]
+        attr_define = @options[:define]
 
         if attr_alias.nil?
-          @model.attribute(attrib, cast_type)
+          @model.attribute(attrib, cast_type) if attr_define
         else
-          @model.attribute(attr_alias, cast_type)
+          @model.attribute(attr_alias, cast_type) if attr_define
 
           delegatable_methods.each do |method_name|
             old_name = "#{method_name}".sub("#{attr_name}", "#{attrib}")
