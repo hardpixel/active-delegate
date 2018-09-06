@@ -231,11 +231,17 @@ module ActiveDelegate
         cast_type  = attribute_cast_type(attr_name)
         attr_alias = @options[:alias]
 
-        @model.attribute(attrib, cast_type)
-
-        unless attr_alias.nil?
+        if attr_alias.nil?
+          @model.attribute(attrib, cast_type)
+        else
           @model.attribute(attr_alias, cast_type)
-          @model.alias_attribute(attr_alias, attrib)
+
+          delegatable_methods.each do |method_name|
+            old_name = "#{method_name}".sub("#{attr_name}", "#{attrib}")
+            new_name = "#{method_name}".sub("#{attr_name}", "#{attr_alias}")
+
+            @model.alias_method :"#{new_name}", :"#{old_name}"
+          end
         end
       end
 
