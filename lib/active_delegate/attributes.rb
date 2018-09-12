@@ -209,17 +209,21 @@ module ActiveDelegate
         attr_cattr = :"_attribute_#{attrib}_default"
 
         if needs_type_cast?(attr_name)
+          cast_type = attribute_cast_type(attr_name)
+
           @model.class_eval do
             class_eval <<-EOM, __FILE__, __LINE__ + 1
               def #{attrib}
-                assoc_value = send(:#{attr_assoc}).try(:#{attr_name})
-                self.class.type_for_attribute('#{attrib}').cast(assoc_value) ||
-                self.class.try(:#{attr_cattr})
+                assoc_value = send(:#{attr_assoc}).try(:#{attr_name}) || self.class.try(:#{attr_cattr})
+                ActiveRecord::Type.lookup(:#{cast_type}).cast(assoc_value)
               end
 
               def #{attrib}=(value)
-                assoc_value = self.class.type_for_attribute('#{attrib}').cast(value)
-                send(:#{attr_assoc}).send(:#{attr_name}=, assoc_value)
+                assoc_record = send(:#{attr_assoc})
+                assoc_value  = ActiveRecord::Type.lookup(:#{cast_type}).cast(value)
+                assoc_value  = assoc_record.class.type_for_attribute('#{attr_name}').cast(assoc_value)
+
+                assoc_record.send(:#{attr_name}=, assoc_value)
               end
             EOM
           end
