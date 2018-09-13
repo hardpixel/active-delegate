@@ -215,22 +215,11 @@ module ActiveDelegate
 
         if needs_type_cast?(attr_name)
           cast_type = attribute_cast_type(attr_name)
+          redefine_attribute_methods(attrib, attr_name, cast_type, attr_assoc, attr_cattr)
 
-          @model.class_eval do
-            class_eval <<-EOM, __FILE__, __LINE__ + 1
-              def #{attrib}
-                assoc_value = send(:#{attr_assoc}).try(:#{attr_name}) || self.class.try(:#{attr_cattr})
-                ActiveRecord::Type.lookup(:#{cast_type}).cast(assoc_value)
-              end
-
-              def #{attrib}=(value)
-                assoc_record = send(:#{attr_assoc})
-                assoc_value  = ActiveRecord::Type.lookup(:#{cast_type}).cast(value)
-                assoc_value  = assoc_record.class.type_for_attribute('#{attr_name}').cast(assoc_value)
-
-                assoc_record.send(:#{attr_name}=, assoc_value)
-              end
-            EOM
+          localized_attributes.each do |loc_attr_name|
+            loc_attrib = prefix_attribute(loc_attr_name)
+            redefine_attribute_methods(loc_attrib, loc_attr_name, cast_type, attr_assoc, attr_cattr)
           end
         end
       end
@@ -284,6 +273,26 @@ module ActiveDelegate
 
         @model.scope :"without_#{attrib}", -> (*names) do
           joins(attr_assoc).where.not(attr_table => { attr_name => names })
+        end
+      end
+
+      # Redefine attribute methods
+      def redefine_attribute_methods(attrib, attr_name, cast_type, attr_assoc, attr_cattr)
+        @model.class_eval do
+          class_eval <<-EOM, __FILE__, __LINE__ + 1
+            def #{attrib}
+              assoc_value = send(:#{attr_assoc}).try(:#{attr_name}) || self.class.try(:#{attr_cattr})
+              ActiveRecord::Type.lookup(:#{cast_type}).cast(assoc_value)
+            end
+
+            def #{attrib}=(value)
+              assoc_record = send(:#{attr_assoc})
+              assoc_value  = ActiveRecord::Type.lookup(:#{cast_type}).cast(value)
+              assoc_value  = assoc_record.class.type_for_attribute('#{attr_name}').cast(assoc_value)
+
+              assoc_record.send(:#{attr_name}=, assoc_value)
+            end
+          EOM
         end
       end
   end
