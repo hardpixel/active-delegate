@@ -129,14 +129,19 @@ module ActiveDelegate
         @options.fetch :default, association_class.column_defaults["#{attribute}"]
       end
 
+      # Get attribute type from associated model
+      def attribute_type(attribute)
+        association_class.type_for_attribute("#{attribute}")
+      end
+
       # Get attribute cast type
       def attribute_cast_type(attribute)
-        @options.fetch :cast_type, association_class.type_for_attribute("#{attribute}")
+        @options.fetch :cast_type, attribute_type(attribute)
       end
 
       # Check if attribute types are not the same
       def cast_types_mismatch?(attribute)
-        attribute_cast_type(attribute) != association_class.type_for_attribute("#{attribute}")
+        attribute_cast_type(attribute) != attribute_type(attribute)
       end
 
       # Check if attribute needs type cast
@@ -214,12 +219,14 @@ module ActiveDelegate
         attr_cattr = :"_attribute_#{attrib}_default"
 
         if needs_type_cast?(attr_name)
+          attr_type = attribute_type(attr_name).type
           cast_type = attribute_cast_type(attr_name)
-          redefine_attribute_methods(attrib, attr_name, cast_type, attr_assoc, attr_cattr)
+
+          redefine_attribute_methods(attrib, attr_name, cast_type, attr_type, attr_assoc, attr_cattr)
 
           localized_attributes.each do |loc_attr_name|
             loc_attrib = prefix_attribute(loc_attr_name)
-            redefine_attribute_methods(loc_attrib, loc_attr_name, cast_type, attr_assoc, attr_cattr)
+            redefine_attribute_methods(loc_attrib, loc_attr_name, cast_type, attr_type, attr_assoc, attr_cattr)
           end
         end
       end
@@ -277,7 +284,7 @@ module ActiveDelegate
       end
 
       # Redefine attribute methods
-      def redefine_attribute_methods(attrib, attr_name, cast_type, attr_assoc, attr_cattr)
+      def redefine_attribute_methods(attrib, attr_name, cast_type, attr_type, attr_assoc, attr_cattr)
         @model.class_eval do
           class_eval <<-EOM, __FILE__, __LINE__ + 1
             def #{attrib}
@@ -286,11 +293,9 @@ module ActiveDelegate
             end
 
             def #{attrib}=(value)
-              assoc_record = send(:#{attr_assoc})
-              assoc_value  = ActiveRecord::Type.lookup(:#{cast_type}).cast(value)
-              assoc_value  = assoc_record.class.type_for_attribute('#{attr_name}').cast(assoc_value)
-
-              assoc_record.send(:#{attr_name}=, assoc_value)
+              assoc_value = ActiveRecord::Type.lookup(:#{cast_type}).cast(value)
+              assoc_value = ActiveRecord::Type.lookup(:#{attr_type}).cast(assoc_value)
+              send(:#{attr_assoc}).send(:#{attr_name}=, assoc_value)
             end
           EOM
         end
