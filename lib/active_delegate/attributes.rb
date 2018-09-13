@@ -105,6 +105,11 @@ module ActiveDelegate
         prefix.is_a?(TrueClass) ? @options[:to] : prefix
       end
 
+      # Get prefixed attribute
+      def prefix_attribute(attribute)
+        :"#{attribute_prefix}_#{attribute}"
+      end
+
       # Get unprefixed attribute
       def unprefix_attribute(attribute)
         attribute.to_s.sub("#{attribute_prefix}_", '')
@@ -113,7 +118,7 @@ module ActiveDelegate
       # Get prefixed attributes
       def prefix_attributes(attributes)
         if @options[:prefix].present?
-          attributes.map { |a| :"#{attribute_prefix}_#{a}" }
+          attributes.map { |a| prefix_attribute(a) }
         else
           attributes
         end
