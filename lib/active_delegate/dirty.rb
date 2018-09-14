@@ -3,7 +3,7 @@ module ActiveDelegate
     class << self
       # Get dirty methods for attributes
       def dirty_methods(attributes)
-        @dirty_methods = attributes.to_a.flat_map do |attribute|
+        @dirty_methods = Array(attributes).flat_map do |attribute|
           method_suffixes.map { |suffix| "#{attribute}#{suffix}" }
         end
       end

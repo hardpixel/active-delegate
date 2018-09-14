@@ -3,7 +3,7 @@ module ActiveDelegate
     class << self
       # Get readwrite methods for attributes
       def readwrite_methods(attributes)
-        @readwrite_methods = attributes.to_a.flat_map do |attribute|
+        @readwrite_methods = Array(attributes).flat_map do |attribute|
           method_suffixes.map { |suffix| "#{attribute}#{suffix}" }
         end
       end

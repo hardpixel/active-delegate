@@ -5,7 +5,7 @@ module ActiveDelegate
     class << self
       # Get localized methods for attributes
       def localized_methods(attributes)
-        @localized_methods = attributes.to_a.flat_map do |attribute|
+        @localized_methods = Array(attributes).flat_map do |attribute|
           method_suffixes.map { |suffix| "#{attribute}#{suffix}" }
         end
       end
