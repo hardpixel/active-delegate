@@ -11,6 +11,7 @@ module ActiveDelegate
 
       delegate_attributes
       save_delegated_attributes
+      save_localized_attributes
       redefine_build_association
     end
 
@@ -169,14 +170,17 @@ module ActiveDelegate
 
         delegated = @model.try(dl_method).to_a.concat(delegated)
         @model.send(:define_singleton_method, dl_method) { delegated }
+      end
 
-        if @options[:localized].present?
-          lc_method = :"#{dl_atable}_localized_attribute_names"
-          localized = prefix_attributes(localized_attributes)
-          localized = @model.try(lc_method).to_a.concat(localized)
+      # Save localized attributes in model class
+      def save_localized_attributes
+        return if @options[:localized].blank?
 
-          @model.send(:define_singleton_method, lc_method) { localized }
-        end
+        lc_method = :"#{dl_atable}_localized_attribute_names"
+        localized = prefix_attributes(localized_attributes)
+        localized = @model.try(lc_method).to_a.concat(localized)
+
+        @model.send(:define_singleton_method, lc_method) { localized }
       end
 
       # Define attribute default values, methods and scopes
