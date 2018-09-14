@@ -1,5 +1,6 @@
 module ActiveDelegate
-  autoload :Methods, 'active_delegate/methods'
+  autoload :Methods,   'active_delegate/methods'
+  autoload :Attribute, 'active_delegate/attribute'
 
   class Attributes
     # Initialize attributes
@@ -146,16 +147,6 @@ module ActiveDelegate
         @options.fetch :cast_type, attribute_type(attribute)
       end
 
-      # Check if attribute types are not the same
-      def cast_types_mismatch?(attribute)
-        attribute_cast_type(attribute) != attribute_type(attribute)
-      end
-
-      # Check if attribute needs type cast
-      def needs_type_cast?(attribute)
-        @options[:cast] != false && cast_types_mismatch?(attribute)
-      end
-
       # Check if should define attribute finders
       def define_finders?(attribute)
         @options[:finder] || Array(@options[:finder]).include?(attribute)
@@ -196,48 +187,23 @@ module ActiveDelegate
         undefined.each do |attrib|
           attr_name = unprefix_attribute(attrib)
 
-          define_attribute_default_value(attrib, attr_name)
-          define_attribute_type_cast(attrib, attr_name)
+          define_attribute_accessors(attrib, attr_name)
           define_attribute_and_alias(attrib, attr_name)
           define_attribute_finders_and_scopes(attrib, attr_name)
         end
       end
 
-      # Define delegated attribute default
-      def define_attribute_default_value(attrib, attr_name)
-        attr_default = attribute_default(attr_name)
+      # Define attribute accessors
+      def define_attribute_accessors(attrib, attr_name)
+        attr_deft = attribute_default(attr_name)
+        attr_type = attribute_type(attr_name)
+        cast_type = attribute_cast_type(attr_name)
 
-        unless attr_default.nil?
-          attr_assoc = @options[:to]
-          attr_cattr = :"_attribute_#{attrib}_default"
+        redefine_attribute_accessors(attrib, attr_name, cast_type, attr_type, attr_deft)
 
-          @model.send(:define_singleton_method, attr_cattr) { attr_default }
-
-          @model.class_eval do
-            class_eval <<-EOM, __FILE__, __LINE__ + 1
-              def #{attrib}
-                send(:#{attr_assoc}).try(:#{attr_name}) || self.class.send(:#{attr_cattr})
-              end
-            EOM
-          end
-        end
-      end
-
-      # Define attribute type casting
-      def define_attribute_type_cast(attrib, attr_name)
-        attr_assoc = @options[:to]
-        attr_cattr = :"_attribute_#{attrib}_default"
-
-        if needs_type_cast?(attr_name)
-          attr_type = attribute_type(attr_name).type
-          cast_type = attribute_cast_type(attr_name)
-
-          redefine_attribute_methods(attrib, attr_name, cast_type, attr_type, attr_assoc, attr_cattr)
-
-          localized_attributes.each do |loc_attr_name|
-            loc_attrib = prefix_attribute(loc_attr_name)
-            redefine_attribute_methods(loc_attrib, loc_attr_name, cast_type, attr_type, attr_assoc, attr_cattr)
-          end
+        localized_attributes.each do |loc_attr_name|
+          loc_attrib = prefix_attribute(loc_attr_name)
+          redefine_attribute_accessors(loc_attrib, loc_attr_name, cast_type, attr_type)
         end
       end
 
@@ -291,21 +257,22 @@ module ActiveDelegate
         end
       end
 
-      # Redefine attribute methods
-      def redefine_attribute_methods(attrib, attr_name, cast_type, attr_type, attr_assoc, attr_cattr)
-        @model.class_eval do
-          class_eval <<-EOM, __FILE__, __LINE__ + 1
-            def #{attrib}
-              assoc_value = send(:#{attr_assoc}).try(:#{attr_name}) || self.class.try(:#{attr_cattr})
-              ActiveRecord::Type.lookup(:#{cast_type}).cast(assoc_value)
-            end
+      # Redefine attribute accessor methods
+      def redefine_attribute_accessors(attrib, attr_name, cast_type, attr_type, default=nil)
+        attr_options = {
+          association: association_name,
+          attribute:   attr_name,
+          read_type:   cast_type,
+          write_type:  attr_type,
+          default:     default
+        }
 
-            def #{attrib}=(value)
-              assoc_value = ActiveRecord::Type.lookup(:#{cast_type}).cast(value)
-              assoc_value = ActiveRecord::Type.lookup(:#{attr_type}).cast(assoc_value)
-              send(:#{attr_assoc}).send(:#{attr_name}=, assoc_value)
-            end
-          EOM
+        @model.send(:redefine_method, attrib) do
+          ActiveDelegate::Attribute.new(self, attr_options).read
+        end
+
+        @model.send(:redefine_method, :"#{attrib}=") do |value|
+          ActiveDelegate::Attribute.new(self, attr_options).write(value)
         end
       end
   end
