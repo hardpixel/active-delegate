@@ -279,12 +279,12 @@ module ActiveDelegate
 
       # Define attribute scope methods
       def define_attribute_scope_methods(attrib, attr_name, attr_assoc, attr_table)
-        @model.scope :"with_#{attrib}", -> (*names) do
-          joins(attr_assoc).where(attr_table => { attr_name => names })
+        @model.send(:define_singleton_method, :"with_#{attrib}") do |*args|
+          joins(attr_assoc).where(attr_table => { attr_name => args })
         end
 
-        @model.scope :"without_#{attrib}", -> (*names) do
-          joins(attr_assoc).where.not(attr_table => { attr_name => names })
+        @model.send(:define_singleton_method, :"without_#{attrib}") do |*args|
+          joins(attr_assoc).where.not(attr_table => { attr_name => args })
         end
       end
 
