@@ -26,18 +26,26 @@ module ActiveDelegate
         }
       end
 
+      # Get association name
+      def association_name
+        @options[:to]
+      end
+
       # Get association reflection
       def association_reflection
-        assoc_name = @options.fetch(:to)
-        reflection = @model.reflect_on_association(assoc_name)
-
+        reflection = @model.reflect_on_association(association_name)
         return reflection unless reflection.nil?
-        raise "#{@model.name} don't have the association #{assoc_name}"
+        raise "#{@model.name} don't have the association #{association_name}"
       end
 
       # Get model association class
       def association_class
         association_reflection.klass
+      end
+
+      # Get association table
+      def association_table
+        association_class.table_name
       end
 
       # Get association attribute names
@@ -83,13 +91,13 @@ module ActiveDelegate
 
       # Delegate attributes
       def delegate_attributes
-        options = { to: @options[:to], allow_nil: @options[:allow_nil], prefix: @options[:prefix] }
+        options = { to: association_name, allow_nil: @options[:allow_nil], prefix: @options[:prefix] }
         @model.delegate(*delegatable_methods, options)
       end
 
       # Redefine build association method
       def redefine_build_association
-        assoc_name = @options[:to]
+        assoc_name = association_name
 
         @model.class_eval do
           class_eval <<-EOM, __FILE__, __LINE__ + 1
@@ -103,7 +111,7 @@ module ActiveDelegate
       # Get attribute prefix
       def attribute_prefix
         prefix = @options[:prefix]
-        prefix.is_a?(TrueClass) ? @options[:to] : prefix
+        prefix.is_a?(TrueClass) ? association_name : prefix
       end
 
       # Get prefixed attribute
@@ -162,13 +170,12 @@ module ActiveDelegate
 
       # Save delagated attributes in model class
       def save_delegated_attributes
-        dl_atable = association_reflection.klass.table_name
-        dl_method = :"#{dl_atable}_attribute_names"
-
         delegated = prefix_attributes(delegatable_attributes)
         define_attribute_defaults_and_methods(delegated)
 
+        dl_method = :"#{association_table}_attribute_names"
         delegated = @model.try(dl_method).to_a.concat(delegated)
+
         @model.send(:define_singleton_method, dl_method) { delegated }
       end
 
@@ -176,7 +183,7 @@ module ActiveDelegate
       def save_localized_attributes
         return if @options[:localized].blank?
 
-        lc_method = :"#{dl_atable}_localized_attribute_names"
+        lc_method = :"#{association_table}_localized_attribute_names"
         localized = prefix_attributes(localized_attributes)
         localized = @model.try(lc_method).to_a.concat(localized)
 
@@ -258,9 +265,7 @@ module ActiveDelegate
 
       # Define attribute finders and scopes
       def define_attribute_finders_and_scopes(attrib, attr_name)
-        attr_assoc = @options[:to]
-        attr_table = association_reflection.klass.table_name
-        attr_args  = [@options[:alias] || attrib, attr_name, attr_assoc, attr_table]
+        attr_args = [@options[:alias] || attrib, attr_name,  association_name, association_table]
 
         define_attribute_finder_methods(*attr_args) if define_finders?(attr_name)
         define_attribute_scope_methods(*attr_args) if define_scopes?(attr_name)
