@@ -171,8 +171,9 @@ module ActiveDelegate
         @model.send(:define_singleton_method, dl_method) { delegated }
 
         if @options[:localized].present?
-          localized = prefix_attributes(localized_attributes)
           lc_method = :"#{dl_atable}_localized_attribute_names"
+          localized = prefix_attributes(localized_attributes)
+          localized = @model.try(lc_method).to_a.concat(localized)
 
           @model.send(:define_singleton_method, lc_method) { localized }
         end
