@@ -1,7 +1,5 @@
 module ActiveDelegate
-  autoload :ReadWrite, 'active_delegate/read_write'
-  autoload :Dirty,     'active_delegate/dirty'
-  autoload :Localized, 'active_delegate/localized'
+  autoload :Methods, 'active_delegate/methods'
 
   class Attributes
     # Initialize attributes
@@ -74,7 +72,7 @@ module ActiveDelegate
       # Get localized delegatable attributes
       def localized_attributes
         attributes = delegatable_attributes
-        localized  = Localized.localized_methods(attributes) if @options[:localized].present?
+        localized  = Methods::Localized.for(attributes) if @options[:localized].present?
 
         localized.to_a.map(&:to_sym)
       end
@@ -82,9 +80,9 @@ module ActiveDelegate
       # Get delegatable methods
       def delegatable_methods
         attributes = delegatable_attributes + localized_attributes
-        readwrite  = ReadWrite.readwrite_methods(attributes)
-        dirty      = Dirty.dirty_methods(attributes)
-        methods    = readwrite + dirty
+        accessors  = Methods::Accessor.for(attributes)
+        dirty      = Methods::Dirty.for(attributes)
+        methods    = accessors + dirty
 
         methods.map(&:to_sym)
       end
