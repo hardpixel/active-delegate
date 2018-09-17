@@ -12,7 +12,15 @@ module ActiveDelegate
     # Delegate associations
     def delegate_associations(*args)
       options = args.extract_options!
-      Associations.new(self, options)
+      options = options.reverse_merge(only: args)
+
+      Associations.new(self, options).call
+    end
+
+    # Delegate association
+    def delegate_association(association, options={})
+      options = options.merge(only: association)
+      Associations.new(self, options).call
     end
 
     # Delegate attributes
