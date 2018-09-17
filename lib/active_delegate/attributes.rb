@@ -1,6 +1,7 @@
+require 'active_delegate/attribute/accessor'
+
 module ActiveDelegate
-  autoload :Methods,   'active_delegate/methods'
-  autoload :Attribute, 'active_delegate/attribute'
+  autoload :Methods, 'active_delegate/methods'
 
   class Attributes
     # Initialize attributes
@@ -268,11 +269,11 @@ module ActiveDelegate
         }
 
         @model.send(:redefine_method, attrib) do
-          ActiveDelegate::Attribute.new(self, attr_options).read
+          ActiveDelegate::Attribute::Accessor.new(self, attr_options).read
         end
 
         @model.send(:redefine_method, :"#{attrib}=") do |value|
-          ActiveDelegate::Attribute.new(self, attr_options).write(value)
+          ActiveDelegate::Attribute::Accessor.new(self, attr_options).write(value)
         end
       end
   end
