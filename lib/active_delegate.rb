@@ -26,17 +26,17 @@ module ActiveDelegate
     # Delegate attributes
     def delegate_attributes(*args)
       options = args.extract_options!
-      options = options.except(:single, :cast_type, :alias)
+      options = options.reverse_merge(only: args).except(:cast_type, :alias)
 
-      Attributes.new(self, options)
+      Attributes.new(self, options).call
     end
 
     # Delegate attribute
     def delegate_attribute(attribute, cast_type, options={})
       options = options.except(:only, :except)
-      options = options.merge(only: [attribute], single: true, cast_type: cast_type)
+      options = options.merge(only: attribute, cast_type: cast_type)
 
-      Attributes.new(self, options)
+      Attributes.new(self, options).call
     end
   end
 end

@@ -8,7 +8,10 @@ module ActiveDelegate
     def initialize(model, options)
       @model   = model
       @options = default_options.merge(options)
+    end
 
+    # Delegate attributes
+    def call
       delegate_attributes
       save_delegated_attributes
       save_localized_attributes
@@ -64,8 +67,8 @@ module ActiveDelegate
       # Get delegatable attributes
       def delegatable_attributes
         attributes = association_attribute_names.map(&:to_sym)
-        attributes = attributes & @options[:only].to_a   if @options[:only].present?
-        attributes = attributes - @options[:except].to_a if @options[:except].present?
+        attributes = attributes & Array(@options[:only])   if @options[:only].present?
+        attributes = attributes - Array(@options[:except]) if @options[:except].present?
         attributes = attributes - default_excluded_attributes
 
         attributes.map(&:to_sym)
