@@ -10,7 +10,12 @@ module ActiveDelegate
 
     # Get default options
     def default_options
-      { except: [], only: [], allow_nil: false, to: [] }
+      {
+        except:    [],
+        only:      [],
+        to:        nil,
+        allow_nil: false
+      }
     end
 
     # Get delegation options
