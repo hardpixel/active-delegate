@@ -4,7 +4,7 @@ module ActiveDelegate
       attr_reader :record, :options
 
       # Initialize attribute
-      def initialize(record, options={})
+      def initialize(record, options = {})
         @record  = record
         @options = options
       end

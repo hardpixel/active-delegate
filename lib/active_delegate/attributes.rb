@@ -21,7 +21,7 @@ module ActiveDelegate
 
     # Get attribute options
     def attribute_options
-      keys = [:cast_type, :default, :define, :alias, :localized, :finder, :scope]
+      keys = %i[cast_type default define alias localized finder scope]
       options.select { |k, _v| k.in? keys }.merge(prefix: delegation_prefix)
     end
 
@@ -37,7 +37,7 @@ module ActiveDelegate
 
     # Default excluded attributes
     def excluded_attributes
-      excluded  = [:id, :created_at, :updated_at]
+      excluded  = %i[id created_at updated_at]
       assoc_as  = association_reflection.options[:as]
       excluded += [:"#{assoc_as}_type", :"#{assoc_as}_id"] if assoc_as.present?
 

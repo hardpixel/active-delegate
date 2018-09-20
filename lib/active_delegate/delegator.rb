@@ -20,16 +20,16 @@ module ActiveDelegate
 
     # Get delegation options
     def delegation_options
-      options.select { |k, _v| k.in? [:to, :allow_nil, :prefix] }
+      options.select { |k, _v| k.in? %i[to allow_nil prefix] }
     end
 
     # Get delegation arguments
-    def delegation_args(available=[])
-      included  = Array(options[:only]).map(&:to_sym)
-      excluded  = Array(options[:except]).map(&:to_sym)
-      available = Array(available).map(&:to_sym)
-      available = available & included if included.any?
-      available = available - excluded if excluded.any?
+    def delegation_args(available = [])
+      included   = Array(options[:only]).map(&:to_sym)
+      excluded   = Array(options[:except]).map(&:to_sym)
+      available  = Array(available).map(&:to_sym)
+      available &= included if included.any?
+      available -= excluded if excluded.any?
 
       available
     end

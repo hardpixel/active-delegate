@@ -26,7 +26,7 @@ module ActiveDelegate
 
       # Normalize locale
       def normalize_locale(locale)
-        "#{locale.to_s.downcase.sub("-", "_")}".freeze
+        locale.to_s.downcase.sub('-', '_').to_s
       end
     end
   end

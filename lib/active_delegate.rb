@@ -18,7 +18,7 @@ module ActiveDelegate
     end
 
     # Delegate association
-    def delegate_association(association, options={})
+    def delegate_association(association, options = {})
       options = options.merge(only: association)
       Associations.new(self, options).call
     end
@@ -32,7 +32,7 @@ module ActiveDelegate
     end
 
     # Delegate attribute
-    def delegate_attribute(attribute, cast_type, options={})
+    def delegate_attribute(attribute, cast_type, options = {})
       options = options.except(:only, :except)
       options = options.merge(only: attribute, cast_type: cast_type)
 

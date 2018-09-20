@@ -7,7 +7,7 @@ module ActiveDelegate
       attr_reader :attribute_name, :association_class, :options
 
       # Initialize attribute methods
-      def initialize(attribute_name, association_class, options={})
+      def initialize(attribute_name, association_class, options = {})
         @attribute_name    = attribute_name
         @association_class = association_class
         @options           = options
