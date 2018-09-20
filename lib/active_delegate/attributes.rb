@@ -1,283 +1,172 @@
+require 'active_delegate/delegator'
+require 'active_delegate/attribute/object'
 require 'active_delegate/attribute/accessor'
 
 module ActiveDelegate
-  autoload :Methods, 'active_delegate/methods'
+  class Attributes < Delegator
+    # Get default options
+    def default_options
+      {
+        except:    [],
+        only:      [],
+        localized: false,
+        define:    true,
+        finder:    false,
+        scope:     false,
+        to:        nil,
+        prefix:    nil,
+        allow_nil: false
+      }
+    end
 
-  class Attributes
-    # Initialize attributes
-    def initialize(model, options)
-      @model   = model
-      @options = default_options.merge(options)
+    # Get attribute options
+    def attribute_options
+      keys = [:cast_type, :default, :define, :alias, :localized, :finder, :scope]
+      options.select { |k, _v| k.in? keys }.merge(prefix: delegation_prefix)
+    end
+
+    # Get association table
+    def association_table
+      association_class.table_name
+    end
+
+    # Get association attribute names
+    def association_attribute_names
+      association_class.attribute_names
+    end
+
+    # Default excluded attributes
+    def excluded_attributes
+      excluded  = [:id, :created_at, :updated_at]
+      assoc_as  = association_reflection.options[:as]
+      excluded += [:"#{assoc_as}_type", :"#{assoc_as}_id"] if assoc_as.present?
+
+      excluded
+    end
+
+    # Get delegatable attributes
+    def delegatable_attributes
+      attributes = delegation_args(association_attribute_names)
+      attributes - excluded_attributes
     end
 
     # Delegate attributes
     def call
-      delegate_attributes
-      save_delegated_attributes
-      save_localized_attributes
-      redefine_build_association
+      redefine_build_association(association_name)
+
+      delegatable_attributes.each do |attribute_name|
+        attribute = ActiveDelegate::Attribute::Object.new(
+          attribute_name, association_class, attribute_options
+        )
+
+        delegate_methods(attribute.delegatable_methods)
+        define_model_class_methods(attribute)
+
+        define_attribute_methods(attribute)
+        define_attribute_queries(attribute)
+      end
     end
 
     private
 
-      # Get default options
-      def default_options
-        {
-          except: [], only: [], allow_nil: false, to: [],
-          prefix: nil, localized: false, finder: false,
-          scope: false, cast: false, define: true
-        }
-      end
-
-      # Get association name
-      def association_name
-        @options[:to]
-      end
-
-      # Get association reflection
-      def association_reflection
-        reflection = @model.reflect_on_association(association_name)
-        return reflection unless reflection.nil?
-        raise "#{@model.name} don't have the association #{association_name}"
-      end
-
-      # Get model association class
-      def association_class
-        association_reflection.klass
-      end
-
-      # Get association table
-      def association_table
-        association_class.table_name
-      end
-
-      # Get association attribute names
-      def association_attribute_names
-        association_class.attribute_names
-      end
-
-      # Default excluded attributes
-      def default_excluded_attributes
-        assoc_as  = association_reflection.options[:as]
-        poly_attr = [:"#{assoc_as}_type", :"#{assoc_as}_id"] if assoc_as.present?
-
-        [:id, :created_at, :updated_at] + poly_attr.to_a
-      end
-
-      # Get delegatable attributes
-      def delegatable_attributes
-        attributes = association_attribute_names.map(&:to_sym)
-        attributes = attributes & Array(@options[:only])   if @options[:only].present?
-        attributes = attributes - Array(@options[:except]) if @options[:except].present?
-        attributes = attributes - default_excluded_attributes
-
-        attributes.map(&:to_sym)
-      end
-
-      # Get localized delegatable attributes
-      def localized_attributes
-        attributes = delegatable_attributes
-        localized  = Methods::Localized.for(attributes) if @options[:localized].present?
-
-        localized.to_a.map(&:to_sym)
-      end
-
-      # Get delegatable methods
-      def delegatable_methods
-        attributes = delegatable_attributes + localized_attributes
-        accessors  = Methods::Accessor.for(attributes)
-        dirty      = Methods::Dirty.for(attributes)
-        methods    = accessors + dirty
-
-        methods.map(&:to_sym)
-      end
-
-      # Delegate attributes
-      def delegate_attributes
-        options = { to: association_name, allow_nil: @options[:allow_nil], prefix: @options[:prefix] }
-        @model.delegate(*delegatable_methods, options)
-      end
-
-      # Redefine build association method
-      def redefine_build_association
-        assoc_name = association_name
-
-        @model.class_eval do
-          class_eval <<-EOM, __FILE__, __LINE__ + 1
-            def #{assoc_name}
-              super || send(:build_#{assoc_name})
-            end
-          EOM
-        end
-      end
-
-      # Get attribute prefix
-      def attribute_prefix
-        prefix = @options[:prefix]
-        prefix.is_a?(TrueClass) ? association_name : prefix
-      end
-
-      # Get prefixed attribute
-      def prefix_attribute(attribute)
-        :"#{attribute_prefix}_#{attribute}"
-      end
-
-      # Get unprefixed attribute
-      def unprefix_attribute(attribute)
-        attribute.to_s.sub("#{attribute_prefix}_", '')
-      end
-
-      # Get prefixed attributes
-      def prefix_attributes(attributes)
-        if @options[:prefix].present?
-          attributes.map { |a| prefix_attribute(a) }
-        else
-          attributes
-        end
-      end
-
-      # Get attribute default
-      def attribute_default(attribute)
-        @options.fetch :default, association_class.column_defaults["#{attribute}"]
-      end
-
-      # Get attribute type from associated model
-      def attribute_type(attribute)
-        association_class.type_for_attribute("#{attribute}")
-      end
-
-      # Get attribute cast type
-      def attribute_cast_type(attribute)
-        @options.fetch :cast_type, attribute_type(attribute)
-      end
-
-      # Check if should define attribute finders
-      def define_finders?(attribute)
-        @options[:finder] || Array(@options[:finder]).include?(attribute)
-      end
-
-      # Check if should define attribute scopes
-      def define_scopes?(attribute)
-        @options[:scope] || Array(@options[:scope]).include?(attribute)
-      end
-
-      # Save delagated attributes in model class
-      def save_delegated_attributes
-        delegated = prefix_attributes(delegatable_attributes)
-        define_attribute_defaults_and_methods(delegated)
-
-        dl_method = :"#{association_table}_attribute_names"
-        delegated = @model.try(dl_method).to_a.concat(delegated)
-
-        @model.send(:define_singleton_method, dl_method) { delegated }
-      end
-
-      # Save localized attributes in model class
-      def save_localized_attributes
-        return if @options[:localized].blank?
-
-        lc_method = :"#{association_table}_localized_attribute_names"
-        localized = prefix_attributes(localized_attributes)
-        localized = @model.try(lc_method).to_a.concat(localized)
-
-        @model.send(:define_singleton_method, lc_method) { localized }
-      end
-
-      # Define attribute default values, methods and scopes
-      def define_attribute_defaults_and_methods(attributes)
-        existing  = @model.attribute_names.map(&:to_sym)
-        undefined = attributes.reject { |a| a.in? existing }
-
-        undefined.each do |attrib|
-          attr_name = unprefix_attribute(attrib)
-
-          define_attribute_accessors(attrib, attr_name)
-          define_attribute_and_alias(attrib, attr_name)
-          define_attribute_finders_and_scopes(attrib, attr_name)
-        end
-      end
-
-      # Define attribute accessors
-      def define_attribute_accessors(attrib, attr_name)
-        attr_deft = attribute_default(attr_name)
-        attr_type = attribute_type(attr_name)
-        cast_type = attribute_cast_type(attr_name)
-
-        redefine_attribute_accessors(attrib, attr_name, cast_type, attr_type, attr_deft)
-
-        localized_attributes.each do |loc_attr_name|
-          loc_attrib = prefix_attribute(loc_attr_name)
-          redefine_attribute_accessors(loc_attrib, loc_attr_name, cast_type, attr_type)
-        end
-      end
-
-      # Define delegated attribute alias
-      def define_attribute_and_alias(attrib, attr_name)
-        attr_alias  = @options[:alias]
-        attr_define = @options[:define]
-
-        if attr_define
-          cast_type = attribute_cast_type(attr_name)
-          @model.attribute(attr_alias || attrib, cast_type)
-        end
-
-        if attr_alias
-          delegatable_methods.each do |method_name|
-            old_name = "#{method_name}".sub("#{attr_name}", "#{attrib}")
-            new_name = "#{method_name}".sub("#{attr_name}", "#{attr_alias}")
-
-            @model.alias_method :"#{new_name}", :"#{old_name}"
+    # Redefine build association method
+    def redefine_build_association(assoc_name)
+      model.class_eval do
+        class_eval <<-EOM, __FILE__, __LINE__ + 1
+          def #{assoc_name}
+            super || send(:build_#{assoc_name})
           end
-        end
+        EOM
+      end
+    end
+
+    # Redefine attribute accessor methods
+    def redefine_attribute_accessors(method_name, attribute)
+      attr_options = {
+        association: association_name,
+        attribute:   attribute.unprefixed,
+        read_type:   attribute.read_type,
+        write_type:  attribute.write_type,
+        default:     attribute.default
+      }
+
+      model.send(:redefine_method, method_name) do
+        ActiveDelegate::Attribute::Accessor.new(self, attr_options).read
       end
 
-      # Define attribute finders and scopes
-      def define_attribute_finders_and_scopes(attrib, attr_name)
-        attr_args = [@options[:alias] || attrib, attr_name,  association_name, association_table]
+      model.send(:redefine_method, :"#{method_name}=") do |value|
+        ActiveDelegate::Attribute::Accessor.new(self, attr_options).write(value)
+      end
+    end
 
-        define_attribute_finder_methods(*attr_args) if define_finders?(attr_name)
-        define_attribute_scope_methods(*attr_args) if define_scopes?(attr_name)
+    # Delegate attribute methods
+    def delegate_methods(methods)
+      model.delegate(*methods, delegation_options)
+    end
+
+    # Define model method keeping old values
+    def define_model_method(method, *attributes)
+      attributes = model.try(method).to_a.concat(attributes).uniq
+      model.send(:define_singleton_method, method) { attributes }
+    end
+
+    # Store attribute names in model class methods
+    def define_model_class_methods(attribute)
+      method_name = :"#{association_table}_attribute_names"
+      define_model_method(method_name, attribute.prefixed)
+
+      method_name = :"#{association_table}_localized_attribute_names"
+      define_model_method(method_name, attribute.prefixed) if attribute.localized?
+    end
+
+    # Define delegated attribute methods
+    def define_attribute_methods(attribute)
+      if attribute.define?
+        model.attribute(attribute.aliased, attribute.read_type)
       end
 
-      # Define attribute finder methods
-      def define_attribute_finder_methods(attrib, attr_name, attr_assoc, attr_table)
-        @model.send(:define_singleton_method, :"find_by_#{attrib}") do |value|
-          joins(attr_assoc).find_by(attr_table => { attr_name => value })
-        end
-
-        @model.send(:define_singleton_method, :"find_by_#{attrib}!") do |value|
-          joins(attr_assoc).find_by!(attr_table => { attr_name => value })
-        end
+      attribute.delegatable_attributes.each do |method_name|
+        redefine_attribute_accessors(method_name, attribute)
       end
 
-      # Define attribute scope methods
-      def define_attribute_scope_methods(attrib, attr_name, attr_assoc, attr_table)
-        @model.send(:define_singleton_method, :"with_#{attrib}") do |*args|
-          joins(attr_assoc).where(attr_table => { attr_name => args })
-        end
+      attribute.aliases.each do |alias_name, method_name|
+        model.alias_method(alias_name, method_name)
+      end
+    end
 
-        @model.send(:define_singleton_method, :"without_#{attrib}") do |*args|
-          joins(attr_assoc).where.not(attr_table => { attr_name => args })
-        end
+    # Define attribute finder methods
+    def define_attribute_finders(attr_method:, attr_column:, assoc_name:, table_name:)
+      model.send(:define_singleton_method, :"find_by_#{attr_method}") do |value|
+        joins(assoc_name).find_by(table_name => { attr_column => value })
       end
 
-      # Redefine attribute accessor methods
-      def redefine_attribute_accessors(attrib, attr_name, cast_type, attr_type, default=nil)
-        attr_options = {
-          association: association_name,
-          attribute:   attr_name,
-          read_type:   cast_type,
-          write_type:  attr_type,
-          default:     default
-        }
-
-        @model.send(:redefine_method, attrib) do
-          ActiveDelegate::Attribute::Accessor.new(self, attr_options).read
-        end
-
-        @model.send(:redefine_method, :"#{attrib}=") do |value|
-          ActiveDelegate::Attribute::Accessor.new(self, attr_options).write(value)
-        end
+      model.send(:define_singleton_method, :"find_by_#{attr_method}!") do |value|
+        joins(assoc_name).find_by!(table_name => { attr_column => value })
       end
+    end
+
+    # Define attribute scope methods
+    def define_attribute_scopes(attr_method:, attr_column:, assoc_name:, table_name:)
+      model.send(:define_singleton_method, :"with_#{attr_method}") do |*args|
+        joins(assoc_name).where(table_name => { attr_column => args })
+      end
+
+      model.send(:define_singleton_method, :"without_#{attr_method}") do |*args|
+        joins(assoc_name).where.not(table_name => { attr_column => args })
+      end
+    end
+
+    # Define attribute finders and scopes
+    def define_attribute_queries(attribute)
+      attr_options = {
+        assoc_name:  association_name,
+        table_name:  association_table,
+        attr_method: attribute.aliased,
+        attr_column: attribute.unprefixed
+      }
+
+      define_attribute_finders(**attr_options) if attribute.finder?
+      define_attribute_scopes(**attr_options) if attribute.scope?
+    end
   end
 end
