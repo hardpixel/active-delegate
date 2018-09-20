@@ -165,8 +165,8 @@ module ActiveDelegate
         attr_column: attribute.unprefixed
       }
 
-      define_attribute_finders(**attr_options) if attribute.finder?
-      define_attribute_scopes(**attr_options) if attribute.scope?
+      define_attribute_finders(attr_options) if attribute.finder?
+      define_attribute_scopes(attr_options)  if attribute.scope?
     end
   end
 end
