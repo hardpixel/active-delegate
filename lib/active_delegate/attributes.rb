@@ -90,8 +90,8 @@ module ActiveDelegate
         default:     attribute.default
       }
 
-      model.send(:redefine_method, method_name) do
-        ActiveDelegate::Attribute::Accessor.new(self, attr_options).read
+      model.send(:redefine_method, method_name) do |*args|
+        ActiveDelegate::Attribute::Accessor.new(self, attr_options).read(*args)
       end
 
       model.send(:redefine_method, :"#{method_name}=") do |value|

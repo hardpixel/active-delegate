@@ -45,8 +45,8 @@ module ActiveDelegate
       end
 
       # Get association attribute value
-      def attribute_value
-        association_record.try(attribute_name)
+      def attribute_value(*args)
+        association_record.try(attribute_name, *args)
       end
 
       # Get record attribute type caster
@@ -76,8 +76,8 @@ module ActiveDelegate
       end
 
       # Read and cast value
-      def read
-        value = attribute_value || default_value
+      def read(*args)
+        value = attribute_value(*args) || default_value
         type_cast? ? cast_read_value(value) : value
       end
 
