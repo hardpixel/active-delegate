@@ -44,6 +44,11 @@ module ActiveDelegate
       excluded
     end
 
+    # Get attributes existing in model
+    def existing_attributes
+      model.attribute_names.map(&:to_sym)
+    end
+
     # Get delegatable attributes
     def delegatable_attributes
       attributes = delegation_args(association_attribute_names)
@@ -58,6 +63,8 @@ module ActiveDelegate
         attribute = ActiveDelegate::Attribute::Object.new(
           attribute_name, association_class, attribute_options
         )
+
+        next if existing_attributes.include?(attribute.aliased)
 
         delegate_methods(attribute.delegatable_methods)
         define_model_class_methods(attribute)
