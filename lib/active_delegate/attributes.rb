@@ -30,11 +30,6 @@ module ActiveDelegate
       association_class.table_name
     end
 
-    # Get association attribute names
-    def association_attribute_names
-      association_class.attribute_names
-    end
-
     # Default excluded attributes
     def excluded_attributes
       excluded  = %i[id created_at updated_at]
@@ -44,28 +39,25 @@ module ActiveDelegate
       excluded
     end
 
-    # Get attributes existing in model
-    def existing_attributes
-      model.attribute_names.map(&:to_sym)
-    end
-
     # Get delegatable attributes
     def delegatable_attributes
-      attributes = delegation_args(association_attribute_names)
-      attributes - excluded_attributes
+      attributes  = delegation_args(association_class.attribute_names)
+      attributes -= excluded_attributes
+
+      attributes.map! do |attribute_name|
+        ActiveDelegate::Attribute::Object.new(
+          attribute_name, association_class, attribute_options
+        )
+      end
+
+      attributes.reject { |a| model.has_attribute?(a.prefixed) }
     end
 
     # Delegate attributes
     def call
       redefine_build_association(association_name)
 
-      delegatable_attributes.each do |attribute_name|
-        attribute = ActiveDelegate::Attribute::Object.new(
-          attribute_name, association_class, attribute_options
-        )
-
-        next if existing_attributes.include?(attribute.aliased)
-
+      delegatable_attributes.each do |attribute|
         delegate_methods(attribute.delegatable_methods)
         define_model_class_methods(attribute)
 
