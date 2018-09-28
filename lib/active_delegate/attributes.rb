@@ -33,6 +33,10 @@ module ActiveDelegate
     # Default excluded attributes
     def excluded_attributes
       excluded  = %i[id created_at updated_at]
+
+      sti_col   = association_class.inheritance_column
+      excluded << sti_col.to_sym if sti_col.present?
+
       assoc_as  = association_reflection.options[:as]
       excluded += [:"#{assoc_as}_type", :"#{assoc_as}_id"] if assoc_as.present?
 
