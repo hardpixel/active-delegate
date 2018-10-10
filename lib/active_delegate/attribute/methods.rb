@@ -29,10 +29,17 @@ module ActiveDelegate
         ['', '=', '?']
       end
 
-      def dirty_suffixes
-        @dirty_suffixes ||= Class.new do
+      def dirty_module
+        @dirty_module ||= Class.new do
           include ::ActiveModel::Dirty
-        end.attribute_method_matchers.map(&:suffix).select { |m| m =~ /\A_/ }
+        end
+      end
+
+      def dirty_suffixes
+        @dirty_suffixes ||= begin
+          matchers = dirty_module.attribute_method_matchers.map(&:suffix)
+          matchers.select { |m| m.starts_with?('_') }
+        end
       end
 
       def suffix_attribute(suffixes)
