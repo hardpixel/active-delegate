@@ -1,0 +1,33 @@
+require: rubocop-rspec
+
+RSpec/NestedGroups:
+  Enabled: false
+
+Metrics/LineLength:
+  Enabled: true
+  Max: 80
+  Exclude:
+    - db/migrate/*
+
+Metrics/BlockLength:
+  Exclude:
+    - spec/**/*.rb
+
+Lint/AmbiguousBlockAssociation:
+  Exclude:
+    - spec/**/*.rb
+
+Naming/UncommunicativeMethodParamName:
+  AllowedNames:
+    - 'to'
+    - 'at'
+    - 'on'
+    - 'id'
+    - 'in'
+    - 'as'
+
+AllCops:
+  TargetRubyVersion: 2.5
+
+Rails:
+  Enabled: true
