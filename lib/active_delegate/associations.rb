@@ -4,6 +4,7 @@ require 'active_delegate/delegator'
 require 'active_delegate/association/methods'
 
 module ActiveDelegate
+  # Delegates associations to an associated model
   class Associations < Delegator
     def association_reflections
       association_class.reflect_on_all_associations

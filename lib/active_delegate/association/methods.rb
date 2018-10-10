@@ -2,6 +2,7 @@
 
 module ActiveDelegate
   module Association
+    # Generates association method names
     class Methods
       attr_reader :association_name, :association_class
 

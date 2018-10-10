@@ -5,6 +5,7 @@ require 'active_delegate/attribute/localize'
 
 module ActiveDelegate
   module Attribute
+    # Calculates attribute methods, aliases and options
     class Object
       attr_reader :attribute_name, :association_class, :options
 

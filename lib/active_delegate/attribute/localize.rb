@@ -2,6 +2,7 @@
 
 module ActiveDelegate
   module Attribute
+    # Generates localized attributes names
     class Localize
       attr_reader :attribute_name, :association_instance
 

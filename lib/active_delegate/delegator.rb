@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module ActiveDelegate
+  # Validates delegation target and sets basic options
   class Delegator
     attr_reader :model, :options
 

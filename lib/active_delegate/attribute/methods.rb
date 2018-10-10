@@ -2,6 +2,7 @@
 
 module ActiveDelegate
   module Attribute
+    # Generates attribute method names
     class Methods
       attr_reader :attribute_name, :association_instance
 

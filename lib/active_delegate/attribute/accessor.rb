@@ -2,6 +2,7 @@
 
 module ActiveDelegate
   module Attribute
+    # Reads, writes and type casts attribute value
     class Accessor
       attr_reader :record, :options
 

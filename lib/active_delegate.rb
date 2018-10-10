@@ -3,6 +3,7 @@
 require 'active_record'
 require 'active_delegate/version'
 
+# Defines delegation methods and loads modules
 module ActiveDelegate
   extend ActiveSupport::Concern
 

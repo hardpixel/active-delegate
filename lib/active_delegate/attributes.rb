@@ -5,6 +5,7 @@ require 'active_delegate/attribute/object'
 require 'active_delegate/attribute/accessor'
 
 module ActiveDelegate
+  # Delegates attributes to an associated model
   class Attributes < Delegator
     def default_options
       {
