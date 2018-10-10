@@ -71,11 +71,11 @@ module ActiveDelegate
 
     def redefine_build_association(assoc_name)
       model.class_eval do
-        class_eval <<-EOM, __FILE__, __LINE__ + 1
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{assoc_name}
             super || send(:build_#{assoc_name})
           end
-        EOM
+        RUBY
       end
     end
 
