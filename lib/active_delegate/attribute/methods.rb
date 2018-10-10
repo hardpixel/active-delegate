@@ -37,8 +37,8 @@ module ActiveDelegate
 
       def dirty_suffixes
         @dirty_suffixes ||= begin
-          matchers = dirty_module.attribute_method_matchers.map(&:suffix)
-          matchers.select { |m| m.starts_with?('_') }
+          suffixes = dirty_module.attribute_method_matchers.map(&:suffix)
+          suffixes.select { |m| m.starts_with?('_') }
         end
       end
 
