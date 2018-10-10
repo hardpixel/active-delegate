@@ -47,9 +47,9 @@ module ActiveDelegate
 
     # Get association reflection
     def association_reflection
-      reflection = @model.reflect_on_association(association_name)
+      reflection = model.reflect_on_association(association_name)
       return reflection unless reflection.nil?
-      raise "#{@model.name} don't have the association #{association_name}"
+      raise "#{model.name} don't have the association #{association_name}"
     end
 
     # Get model association class
