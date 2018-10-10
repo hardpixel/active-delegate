@@ -5,8 +5,9 @@ RSpec/NestedGroups:
 
 Metrics/LineLength:
   Enabled: true
-  Max: 80
+  Max: 90
   Exclude:
+    - active_delegate.gemspec
     - db/migrate/*
 
 Metrics/BlockLength:
