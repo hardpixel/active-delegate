@@ -4,7 +4,7 @@ require 'active_delegate/attribute/accessor'
 
 module ActiveDelegate
   class Attributes < Delegator
-    # Get default options
+
     def default_options
       {
         except:    [],
@@ -19,18 +19,15 @@ module ActiveDelegate
       }
     end
 
-    # Get attribute options
     def attribute_options
       keys = %i[cast_type default define alias localized finder scope]
       options.select { |k, _v| k.in? keys }.merge(prefix: delegation_prefix)
     end
 
-    # Get association table
     def association_table
       association_class.table_name
     end
 
-    # Default excluded attributes
     def excluded_attributes
       excluded  = %i[id created_at updated_at]
 
@@ -43,7 +40,6 @@ module ActiveDelegate
       excluded
     end
 
-    # Get delegatable attributes
     def delegatable_attributes
       attributes  = delegation_args(association_class.attribute_names)
       attributes -= excluded_attributes
@@ -57,7 +53,6 @@ module ActiveDelegate
       attributes.reject { |a| model.has_attribute?(a.prefixed) }
     end
 
-    # Delegate attributes
     def call
       redefine_build_association(association_name)
 
@@ -72,7 +67,6 @@ module ActiveDelegate
 
     private
 
-    # Redefine build association method
     def redefine_build_association(assoc_name)
       model.class_eval do
         class_eval <<-EOM, __FILE__, __LINE__ + 1
@@ -83,7 +77,6 @@ module ActiveDelegate
       end
     end
 
-    # Redefine attribute accessor methods
     def redefine_attribute_accessors(method_name, attribute)
       attr_options = {
         association: association_name,
@@ -102,18 +95,15 @@ module ActiveDelegate
       end
     end
 
-    # Delegate attribute methods
     def delegate_methods(methods)
       model.delegate(*methods, delegation_options)
     end
 
-    # Define model method keeping old values
     def define_model_method(method, *attributes)
       attributes = model.try(method).to_a.concat(attributes).uniq
       model.send(:define_singleton_method, method) { attributes }
     end
 
-    # Store attribute names in model class methods
     def define_model_class_methods(attribute)
       method_name = :"#{association_table}_attribute_names"
       define_model_method(method_name, attribute.prefixed)
@@ -122,7 +112,6 @@ module ActiveDelegate
       define_model_method(method_name, attribute.prefixed) if attribute.localized?
     end
 
-    # Define delegated attribute methods
     def define_attribute_methods(attribute)
       if attribute.define?
         model.attribute(attribute.aliased, attribute.read_type)
@@ -137,7 +126,6 @@ module ActiveDelegate
       end
     end
 
-    # Define attribute finder methods
     def define_attribute_finders(attr_method:, attr_column:, assoc_name:, table_name:)
       model.send(:define_singleton_method, :"find_by_#{attr_method}") do |value|
         joins(assoc_name).find_by(table_name => { attr_column => value })
@@ -148,7 +136,6 @@ module ActiveDelegate
       end
     end
 
-    # Define attribute scope methods
     def define_attribute_scopes(attr_method:, attr_column:, assoc_name:, table_name:)
       model.send(:define_singleton_method, :"with_#{attr_method}") do |*args|
         joins(assoc_name).where(table_name => { attr_column => args })
@@ -159,7 +146,6 @@ module ActiveDelegate
       end
     end
 
-    # Define attribute finders and scopes
     def define_attribute_queries(attribute)
       attr_options = {
         assoc_name:  association_name,
