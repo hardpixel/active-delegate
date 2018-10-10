@@ -1,10 +1,11 @@
+# frozen_string_literal: true
+
 require 'active_delegate/delegator'
 require 'active_delegate/attribute/object'
 require 'active_delegate/attribute/accessor'
 
 module ActiveDelegate
   class Attributes < Delegator
-
     def default_options
       {
         except:    [],

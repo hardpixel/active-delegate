@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ActiveDelegate
   module Attribute
     class Localize

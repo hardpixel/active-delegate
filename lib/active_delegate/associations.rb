@@ -1,9 +1,10 @@
+# frozen_string_literal: true
+
 require 'active_delegate/delegator'
 require 'active_delegate/association/methods'
 
 module ActiveDelegate
   class Associations < Delegator
-
     def association_reflections
       association_class.reflect_on_all_associations
     end

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module ActiveDelegate
   class Delegator
     attr_reader :model, :options

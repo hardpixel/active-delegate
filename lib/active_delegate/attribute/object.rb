@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'active_delegate/attribute/methods'
 require 'active_delegate/attribute/localize'
 
