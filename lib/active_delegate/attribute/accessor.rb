@@ -32,7 +32,7 @@ module ActiveDelegate
       end
 
       def type_cast?
-        read_type != write_type
+        read_type_caster.type != write_type_caster.type
       end
 
       def association_record
