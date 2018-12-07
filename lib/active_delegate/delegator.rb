@@ -45,6 +45,7 @@ module ActiveDelegate
     def association_reflection
       reflection = model.reflect_on_association(association_name)
       return reflection unless reflection.nil?
+
       raise "#{model.name} don't have the association #{association_name}"
     end
 

@@ -69,6 +69,7 @@ module ActiveDelegate
 
       def aliases
         return {} unless aliased?
+
         Hash[delegatable_methods.map { |m| generate_alias(m) }]
       end
 
