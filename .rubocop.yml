@@ -27,6 +27,10 @@ Naming/UncommunicativeMethodParamName:
     - 'in'
     - 'as'
 
+Layout/AlignHash:
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle: table
+
 AllCops:
   TargetRubyVersion: 2.5
 
