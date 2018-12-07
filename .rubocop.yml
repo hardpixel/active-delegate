@@ -10,6 +10,12 @@ Metrics/LineLength:
     - active_delegate.gemspec
     - db/migrate/*
 
+Metrics/MethodLength:
+  Max: 15
+
+Metrics/ClassLength:
+  Max: 150
+
 Metrics/BlockLength:
   Exclude:
     - spec/**/*.rb
