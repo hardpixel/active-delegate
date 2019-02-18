@@ -98,7 +98,7 @@ module ActiveDelegate
       end
 
       def remove_prefix(attr_name)
-        attr_name.to_s.sub("#{prefix}_", '').to_sym
+        prefix.present? ? attr_name.to_s.sub("#{prefix}_", '').to_sym : attr_name
       end
 
       def generate_alias(method_name)
