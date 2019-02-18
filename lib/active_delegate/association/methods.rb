@@ -27,11 +27,11 @@ module ActiveDelegate
       end
 
       def prefixed
-        prefixes.map { |s| :"#{s}#{attribute}" }
+        prefixes.map { |s| :"#{s}#{association_name}" }
       end
 
       def suffixed
-        suffixes.map { |s| :"#{attribute}#{s}" }
+        suffixes.map { |s| :"#{association_name}#{s}" }
       end
     end
   end
