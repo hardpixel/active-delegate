@@ -31,7 +31,11 @@ module ActiveDelegate
     end
 
     def excluded_attributes
-      excluded  = %i[id created_at updated_at]
+      excluded  = %i[created_at updated_at]
+      excluded << association_reflection.active_record_primary_key.to_sym
+
+      for_key   = association_reflection.foreign_key
+      excluded << for_key.to_sym if for_key.present?
 
       sti_col   = association_class.inheritance_column
       excluded << sti_col.to_sym if sti_col.present?
