@@ -16,11 +16,19 @@ module ActiveDelegate
       end
 
       def define?
-        options[:define] || in_option?(:define)
+        dirty? && (options[:define] || in_option?(:define))
       end
 
       def localize?
         options[:localized] || in_option?(:localized)
+      end
+
+      def writer?
+        options[:writer] || in_option?(:writer)
+      end
+
+      def dirty?
+        writer? && (options[:dirty] || in_option?(:dirty))
       end
 
       def finder?
@@ -89,7 +97,11 @@ module ActiveDelegate
 
       def delegatable_methods
         @delegatable_methods ||= [unprefixed, *localized].flat_map do |method_name|
-          Methods.new(method_name, association_class).delegatable
+          methods = Methods.new(
+            method_name, association_class, writer: writer?, dirty: dirty?
+          )
+
+          methods.delegatable
         end
       end
 

@@ -11,6 +11,8 @@ module ActiveDelegate
       {
         except:    [],
         only:      [],
+        writer:    true,
+        dirty:     true,
         localized: false,
         define:    true,
         finder:    false,
@@ -22,7 +24,7 @@ module ActiveDelegate
     end
 
     def attribute_options
-      keys = %i[cast_type default define alias localized finder scope]
+      keys = %i[cast_type default define alias writer dirty localized finder scope]
       options.select { |k, _v| k.in? keys }.merge(prefix: delegation_prefix)
     end
 
@@ -93,7 +95,7 @@ module ActiveDelegate
       }
 
       redefine_reader(method_name, attr_options)
-      redefine_writer(method_name, attr_options)
+      redefine_writer(method_name, attr_options) if attribute.writer?
     end
 
     def redefine_reader(method_name, attr_options)

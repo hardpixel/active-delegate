@@ -6,7 +6,9 @@ module ActiveDelegate
     class Methods
       attr_reader :attribute_name, :association_instance
 
-      def initialize(attribute_name, association_class)
+      def initialize(attribute_name, association_class, writer:, dirty:)
+        @define_writer        = writer
+        @define_dirty         = dirty
         @attribute_name       = attribute_name
         @association_instance = association_class.new
       end
@@ -26,7 +28,10 @@ module ActiveDelegate
       private
 
       def accessor_suffixes
-        ['', '=', '?']
+        suffixes = ['', '?']
+        suffixes << '=' if @define_writer
+
+        suffixes
       end
 
       def dirty_module
@@ -36,6 +41,8 @@ module ActiveDelegate
       end
 
       def dirty_suffixes
+        return [] unless @define_dirty
+
         @dirty_suffixes ||= begin
           suffixes = dirty_module.attribute_method_matchers.map(&:suffix)
           suffixes.select { |m| m.starts_with?('_') }
