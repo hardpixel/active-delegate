@@ -74,6 +74,8 @@ module ActiveDelegate
       end
 
       def localized
+        return [] unless localize?
+
         @localized ||= Localize.new(unprefixed, association_class).attributes
       end
 
