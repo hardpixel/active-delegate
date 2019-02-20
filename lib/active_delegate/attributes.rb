@@ -92,10 +92,17 @@ module ActiveDelegate
         default:     attribute.default
       }
 
+      redefine_reader(method_name, attr_options)
+      redefine_writer(method_name, attr_options)
+    end
+
+    def redefine_reader(method_name, attr_options)
       model.send(:redefine_method, method_name) do |*args|
         ActiveDelegate::Attribute::Accessor.new(self, attr_options).read(*args)
       end
+    end
 
+    def redefine_writer(method_name, attr_options)
       model.send(:redefine_method, :"#{method_name}=") do |value|
         ActiveDelegate::Attribute::Accessor.new(self, attr_options).write(value)
       end
