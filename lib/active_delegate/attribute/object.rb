@@ -16,27 +16,27 @@ module ActiveDelegate
       end
 
       def define?
-        dirty? && (options[:define] || in_option?(:define))
+        dirty? && (in_option?(:define) || options[:define])
       end
 
       def localize?
-        options[:localized] || in_option?(:localized)
+        in_option?(:localized) || options[:localized]
       end
 
       def writer?
-        options[:writer] || in_option?(:writer)
+        in_option?(:writer) || options[:writer]
       end
 
       def dirty?
-        writer? && (options[:dirty] || in_option?(:dirty))
+        writer? && (in_option?(:dirty) || options[:dirty])
       end
 
       def finder?
-        options[:finder] || in_option?(:finder)
+        in_option?(:finder) || options[:finder]
       end
 
       def scope?
-        options[:scope] || in_option?(:scope)
+        in_option?(:scope) || options[:scope]
       end
 
       def prefix
