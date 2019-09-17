@@ -91,6 +91,10 @@ module ActiveDelegate
         localized.any?
       end
 
+      def accessible_attributes
+        @accessible_attributes ||= [unprefixed].map { |a| add_prefix(a) }
+      end
+
       def delegatable_attributes
         @delegatable_attributes ||= [unprefixed, *localized].map { |a| add_prefix(a) }
       end

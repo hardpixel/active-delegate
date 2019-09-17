@@ -130,7 +130,7 @@ module ActiveDelegate
     def define_attribute_methods(attribute)
       model.attribute(attribute.aliased, attribute.read_type) if attribute.define?
 
-      attribute.delegatable_attributes.each do |method_name|
+      attribute.accessible_attributes.each do |method_name|
         redefine_attribute_accessors(method_name, attribute)
       end
 
