@@ -38,7 +38,7 @@ Layout/AlignHash:
   EnforcedColonStyle: table
 
 AllCops:
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.6
 
 Rails:
   Enabled: true
