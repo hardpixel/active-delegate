@@ -21,7 +21,7 @@ module ActiveDelegate
     def call
       delegatable_associations.each do |association|
         methods = Association::Methods.new(association, association_class)
-        model.delegate(*methods.delegatable, delegation_options)
+        model.delegate(*methods.delegatable, **delegation_options)
       end
     end
   end
