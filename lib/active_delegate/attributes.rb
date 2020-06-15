@@ -111,7 +111,7 @@ module ActiveDelegate
     end
 
     def delegate_methods(methods)
-      model.delegate(*methods, delegation_options)
+      model.delegate(*methods, **delegation_options)
     end
 
     def define_model_method(method, *attributes)
